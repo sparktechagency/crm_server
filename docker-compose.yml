@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: crm-app
+    ports:
+      - '5010:5010' # Server port
+      - '5011:5011' # Socket port
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - crm-net
+      
+  redis:
+    image: redis:latest
+    container_name: crm-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - crm-net
+
+volumes:
+  redis-data:
+
+networks:
+  crm-net:
