@@ -1,22 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
 import { JwtPayload, Secret } from 'jsonwebtoken';
-import mongoose from 'mongoose';
 import config from '../../../config';
 import { emailVerifyHtml } from '../../../shared/html/emailVerifyHtml';
 import { forgotPasswordHtml } from '../../../shared/html/forgotPasswordHtml';
-import { USER_ROLE, USER_STATUS } from '../../constant';
+import { USER_STATUS } from '../../constant';
 import AppError from '../../utils/AppError';
 import { decodeToken } from '../../utils/decodeToken';
 import generateToken from '../../utils/generateToken';
-import generateUID from '../../utils/generateUID';
 import { isMatchedPassword } from '../../utils/matchPassword';
 import { OtpService } from '../otp/otp.service';
-import Profile from '../profile/profile.model';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
 import { TRegister } from './auth.interface';
-import Company from '../company/company.model';
 
 const registerUser = async (payload: TRegister) => {
   const isUserExist = await User.findOne({ email: payload.email });
@@ -87,99 +83,6 @@ const verifyEmail = async (token: string, otp: { otp: number }) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP not matched');
   }
 
-  const session = await mongoose.startSession();
-  try {
-    session.startTransaction();
-
-    // Step 3: Create user
-    const [uid] = await Promise.all([generateUID()]);
-
-    const userToCreate = {
-      uid,
-      email: decodedUser.email,
-      password: decodedUser.password,
-      role: decodedUser.role,
-    };
-
-    const createdUsers = await User.create([userToCreate], { session });
-    const user = createdUsers?.[0];
-    if (!user) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'User not created');
-    }
-
-    // Step 4: Create profile
-    const createdProfiles = await Profile.create([{ userId: user._id }], {
-      session,
-    });
-    const profile = createdProfiles?.[0];
-    if (!profile) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'Profile not created');
-    }
-
-    // Step 5: Conditionally create company (for company role only)
-    let companyId: string | undefined | any;
-    if (decodedUser.role === 'company') {
-      const createdCompanies = await Company.create(
-        [
-          {
-            companyUserId: user._id,
-            profileId: profile._id,
-          },
-        ],
-        { session },
-      );
-      companyId = createdCompanies?.[0]?._id;
-    }
-
-    // Step 6: Update user with profile and company info
-    const updateUser = await User.findByIdAndUpdate(
-      user._id,
-      {
-        profile: profile._id,
-        myCompany: companyId,
-      },
-      { session },
-    );
-
-    if (!updateUser) {
-      throw new AppError(httpStatus.BAD_REQUEST, 'User not updated');
-    }
-
-    await session.commitTransaction();
-    session.endSession();
-
-    // Step 7: Cleanup OTP
-    await OtpService.deleteOtpById(existingOtp._id.toString());
-
-    // Step 8: Generate access token
-    const accessTokenPayload = {
-      email: user.email,
-      userId: user._id,
-      uid: user.uid,
-      profileId: profile._id,
-      assignedCompany: user.assignedCompany,
-      myCompany: companyId ?? user.myCompany,
-      dispatcherCompany: user.dispatcherCompany,
-      name: user.name,
-      role: user.role,
-    };
-
-    const accessToken = generateToken(
-      accessTokenPayload,
-      config.jwt.access_token as Secret,
-      config.jwt.access_expires_in as string,
-    );
-
-    return {
-      user,
-      profile,
-      accessToken,
-    };
-  } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    throw error;
-  }
 };
 
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
@@ -206,49 +109,6 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }
 
-  // Step 5: Run parallel async tasks
-  const [hopperCompany, loginData] = await Promise.all([
-    User.findOne({ role: USER_ROLE.hopperCompany }),
-    User.findOne({ email }).populate('profile'),
-  ]);
-
-  // Step 4: Prepare JWT payload
-  const userData: Record<string, unknown> = {
-    email: user.email,
-    userId: user._id,
-    uid: user.uid,
-    profileId: user.profile,
-    assignedCompany: user.assignedCompany,
-    myCompany: user.myCompany,
-    dispatcherCompany: user.dispatcherCompany,
-    name: user.name,
-    role: user.role,
-  };
-
-  // Add hopperCompany ID if available
-  if (hopperCompany) {
-    userData.hopperCompany = hopperCompany.myCompany;
-  }
-
-  // Step 6: Generate tokens
-  const [accessToken, refreshToken] = await Promise.all([
-    generateToken(
-      userData,
-      config.jwt.access_token as Secret,
-      config.jwt.access_expires_in as string,
-    ),
-    generateToken(
-      userData,
-      config.jwt.refresh_token as Secret,
-      config.jwt.refresh_expires_in as string,
-    ),
-  ]);
-
-  return {
-    accessToken,
-    refreshToken,
-    user: loginData,
-  };
 };
 
 const logOutUser = async () => {
@@ -426,51 +286,6 @@ const resendOtp = async (
   );
 };
 
-const socialLogin = async (payload: any) => {
-  let user;
-  user = await User.findOne({ email: payload.email });
-  if (!user) {
-    user = await User.create({ ...payload, isSocialLogin: true });
-    const createProfileData = {
-      userId: user._id,
-    };
-
-    const profile = await Profile.create(createProfileData);
-    if (!profile) {
-      throw new AppError(httpStatus.BAD_REQUEST, '');
-    }
-    await User.findByIdAndUpdate(
-      user._id,
-      { profile: profile._id },
-      { new: true },
-    );
-  }
-
-  const userData = {
-    email: user?.email,
-    userId: user?._id,
-    uid: user?.uid,
-    role: user?.role,
-  };
-
-  const accessToken = generateToken(
-    userData,
-    config.jwt.access_token as Secret,
-    config.jwt.access_expires_in as string,
-  );
-
-  const refreshToken = generateToken(
-    userData,
-    config.jwt.refresh_token as Secret,
-    config.jwt.refresh_expires_in as string,
-  );
-
-  return {
-    accessToken,
-    refreshToken,
-  };
-};
-
 const assignRestaurant = async (
   userId: string,
   payload: { myRestaurant: string },
@@ -488,7 +303,6 @@ export const AuthService = {
   verifyOtp,
   logOutUser,
   verifyEmail,
-  socialLogin,
   registerUser,
   resetPassword,
   forgotPassword,

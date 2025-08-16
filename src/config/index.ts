@@ -17,11 +17,6 @@ export default {
     admin_password: process.env.ADMIN_PASSWORD,
   },
 
-  company: {
-    company_email: process.env.HOPPER_COMPANY_EMAIL,
-    company_password: process.env.HOPPER_COMPANY_PASSWORD,
-  },
-
   monitor_usernames: process.env.MONITOR_USERNAMES,
   monitor_passwords: process.env.MONITOR_PASSWORDS,
   project_name: process.env.PROJECT_NAME,
@@ -39,21 +34,11 @@ export default {
     reset_password_expires_in: process.env.RESET_PASSWORD_EXPIRE_IN,
   },
 
-  dispatcher_default_password: process.env.DISPATCHER_DEFAULT_PASSWORD,
-  customer_default_password: process.env.CUSTOMER_DEFAULT_PASSWORD,
   otp_expire_in: process.env.OTP_EXPIRE_IN,
   smtp_username: process.env.SMTP_USERNAME,
   smtp_password: process.env.SMTP_PASSWORD,
-  stripe_secret_key: process.env.STRIPE_SECRET_KEY,
   base_url: process.env.BASE_URL,
   logger_username: process.env.LOGGER_USERNAME,
   logger_password: process.env.LOGGER_PASSWORD,
   admin_password: process.env.ADMIN_PASSWORD,
-
-  aws: {
-    access_key_id: process.env.AWS_ACCESS_KEY_ID,
-    secret_access_key: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-    bucket_name: process.env.AWS_BUCKET_NAME,
-  },
 };

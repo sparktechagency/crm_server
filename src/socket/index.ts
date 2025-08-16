@@ -2,17 +2,8 @@
 import { JwtPayload, Secret } from 'jsonwebtoken';
 import { Server, Socket } from 'socket.io';
 import { TAuthUser } from '../app/interface/authUser';
-import { sendLocationToKafka } from '../app/kafka/producer';
-import { TMessage } from '../app/modules/message/message.interface';
-import { MessageService } from '../app/modules/message/message.service';
 import { decodeToken } from '../app/utils/decodeToken';
 import config from '../config'; // Ensure jwtSecret is defined in config
-
-interface ILocation {
-  jobRequestId: string;
-  longitude: number;
-  latitude: number;
-}
 
 export interface IConnectedUser {
   socketId: string;
@@ -75,79 +66,6 @@ const socketIO = (io: Server) => {
     }
     connectedUser.set(socket.user.userId, { socketId: socket.user.socketId });
 
-    io.emit('online_users', Array.from(connectedUser.keys()));
-
-    // sending message
-    socket.on(
-      'send_message',
-      async (payload: Partial<TMessage & { receiverId: string }>, callback) => {
-        try {
-          if (!payload.conversationId || !payload.text_message) {
-            return callback?.({ success: false, message: 'Invalid payload' });
-          }
-
-          const savedMessage = await MessageService.createMessage(payload);
-
-          io.emit(`receive_message::${payload.conversationId}`, savedMessage);
-
-          callback?.({
-            success: true,
-            message: 'Message sent successfully',
-            data: savedMessage,
-          });
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const receiver: any = connectedUser.get(
-            payload!.receiverId!.toString(),
-          );
-
-          const sender: any = connectedUser.get(payload!.sender!.toString());
-
-          if (receiver) {
-            console.log(receiver.socketId, 'receiver is socket id');
-            io.to(receiver.socketId).emit('new_message', {
-              success: true,
-              data: savedMessage,
-            });
-          }
-
-          if (sender) {
-            console.log(sender.socketId, 'sender');
-            io.to(sender.socketId).emit('new_message', {
-              success: true,
-              data: savedMessage,
-            });
-          }
-        } catch (error) {
-          console.error('Error sending message:', error);
-          callback?.({ success: false, message: 'Internal server error' });
-        }
-      },
-    );
-
-    socket.on('typing', async (payload, callback) => {
-      if (payload.status === true) {
-        io.emit(`typing::${payload.receiverId}`, true);
-        callback({ success: true, message: payload, result: payload });
-      } else {
-        io.emit(`typing::${payload.receiverId}`, false);
-        callback({ success: false, message: payload, result: payload });
-      }
-    });
-
-    socket.on('joinLocationRoom', (payload: { jobRequestId: string }) => {
-      const room = `driver_location::${payload.jobRequestId}`;
-      socket.join(room);
-      console.log(`📍 Order joined room: ${room}`);
-    });
-
-    socket.on('client_location', async (payload: ILocation) => {
-      const longitude = Number(payload.longitude);
-      const latitude = Number(payload.latitude);
-
-      await sendLocationToKafka(payload.jobRequestId, longitude, latitude);
-    });
-
     socket.on('disconnect', () => {
       // eslint-disable-next-line no-console
       console.log('Socket disconnected', socket.id);
@@ -162,7 +80,6 @@ const socketIO = (io: Server) => {
         return;
       }
       connectedUser.delete(socket.user.userId);
-      io.emit('online_users', Array.from(connectedUser.keys()));
     });
 
     socket.on('error', (err) => {

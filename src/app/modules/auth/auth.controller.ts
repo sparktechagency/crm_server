@@ -4,6 +4,7 @@ import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
 import config from '../../../config';
 import generateUID from '../../utils/generateUID';
+import User from '../user/user.model';
 
 const registerUser = catchAsync(async (req, res) => {
   const result = await AuthService.registerUser(req.body);
@@ -32,24 +33,13 @@ const verifyEmail = catchAsync(async (req, res) => {
 });
 
 const loginUser = catchAsync(async (req, res) => {
-  const { accessToken, refreshToken, user } = await AuthService.loginUser(
-    req.body,
-  );
 
-  res.cookie('refreshToken', refreshToken, {
-    secure: config.NODE_ENV === 'production',
-    httpOnly: true,
-  });
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
-    data: {
-      accessToken,
-      refreshToken,
-      user,
-    },
+
   });
 });
 
@@ -134,21 +124,19 @@ const resendOtp = catchAsync(async (req, res) => {
   });
 });
 
-const socialLogin = catchAsync(async (req, res) => {
-  req.body.UID = await generateUID();
-  const result = await AuthService.socialLogin(req.body);
+const assignRestaurant = catchAsync(async (req, res) => {
+  const result = await AuthService.assignRestaurant(req.user.userId, req.body);
 
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User logged in successfully',
+    message: 'Restaurent Assign successfully',
     data: result,
   });
 });
 
-const assignRestaurant = catchAsync(async (req, res) => {
-  const result = await AuthService.assignRestaurant(req.user.userId, req.body);
-
+const lastOne = catchAsync(async (req, res) => {
+  const result = await generateUID(User, "Hub");
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -163,10 +151,10 @@ export const AuthController = {
   loginUser,
   logOutUser,
   verifyEmail,
-  socialLogin,
   registerUser,
   resetPassword,
   changePassword,
   forgotPassword,
   assignRestaurant,
+  lastOne
 };

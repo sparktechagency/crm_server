@@ -90,7 +90,7 @@ userSchema.pre('findOne', async function (next) {
   next();
 });
 
-userSchema.statics.findLastUser = async function () {
+userSchema.statics.findLastOne = async function () {
   return await this.findOne({}, null, { bypassMiddleware: true })
     .select('uid')
     .sort({ createdAt: -1 })

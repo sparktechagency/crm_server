@@ -11,9 +11,6 @@ import seedAdmin from './app/DB/seedAdmin';
 import config from './config';
 import { errorLogger, logger } from './shared/logger';
 import socketIO from './socket';
-import { connectKafkaAdmin } from './app/kafka/admin';
-import { connectKafkaProducer } from './app/kafka/producer';
-import { connectKafkaConsumer } from './app/kafka/consumer';
 let server: Server;
 
 const socketServer = createServer();
@@ -33,11 +30,6 @@ async function main() {
     await mongoose.connect(config.database_url as string).then(() => {
       console.log('Database connected successfully');
     });
-    // kafka connection
-    await connectKafkaAdmin();
-    await connectKafkaProducer();
-    await connectKafkaConsumer();
-
     server = app.listen(config.port, () => {
       console.log(
         colors.green(
@@ -73,7 +65,7 @@ async function main() {
 
 main();
 // Seed Admin in database if not exist
-seedAdmin();
+// seedAdmin();
 
 // Handle unhandled promise rejection
 process.on('unhandledRejection', (err: any) => {

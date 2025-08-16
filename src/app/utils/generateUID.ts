@@ -1,32 +1,27 @@
-import User from '../modules/user/user.model';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Model } from "mongoose";
 
-async function generateUID() {
+async function generateUID(model: Model<any>, key: string) {
   try {
     const date = new Date();
     const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    let newUserId = '';
+    let newIdNumber = "";
 
-    // Find the most recent non-deleted and non-blocked user
-    const latestUser = await User.findLastUser();
+    // Use your reusable static
+    const latestDoc = await (model as any).findLastOne();
 
-    if (latestUser && latestUser.uid) {
-      // Extract the last number from the userId and increment it
-      const lastNumber = parseInt(latestUser.uid.split('-')[2]);
-      console.log({ lastNumber });
-      const newNumber = (lastNumber + 1).toString().padStart(5, '0');
-      newUserId = newNumber;
+    if (latestDoc && latestDoc.uid) {
+      const lastNumber = parseInt(latestDoc.uid.split("-")[2]);
+      const newNumber = (lastNumber + 1).toString().padStart(5, "0");
+      newIdNumber = newNumber;
     } else {
-      // If no valid users found, start from '00001'
-      newUserId = '00001';
+      newIdNumber = "01";
     }
 
-    // Generate the custom ID
-    const customID = `HR-${month}${year}-${newUserId}`;
-    return customID;
+    return `${key}-${year}-${newIdNumber}`;
   } catch (err) {
-    console.error('Error generating custom ID:', err);
-    throw new Error('Failed to generate custom ID');
+    console.error("Error generating custom ID:", err);
+    throw new Error("Failed to generate custom ID");
   }
 }
 
