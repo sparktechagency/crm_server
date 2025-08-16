@@ -18,7 +18,11 @@ import User from './user.model';
 import { StatisticHelper } from '../../helper/staticsHelper';
 import { deleteCache } from '../../../redis';
 
-const updateUserActions = async (id: string, action: string, authUser: TAuthUser): Promise<any> => {
+const updateUserActions = async (
+  id: string,
+  action: string,
+  authUser: TAuthUser,
+): Promise<any> => {
   const user = await User.findById(id);
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
@@ -29,7 +33,7 @@ const updateUserActions = async (id: string, action: string, authUser: TAuthUser
   }
 
   const cacheKey = `getAllDrivers-${authUser.userId}`;
-  console.log(cacheKey, "user ===>");
+  console.log(cacheKey, 'user ===>');
 
   switch (action) {
     case 'blocked':
@@ -43,7 +47,6 @@ const updateUserActions = async (id: string, action: string, authUser: TAuthUser
     default:
       break;
   }
-
 
   await deleteCache(cacheKey);
 
@@ -126,9 +129,9 @@ const driverPerformance = async (driverId: string): Promise<any> => {
     const responseTimeEfficiency =
       avgResponseTime > 0
         ? Math.max(
-          0,
-          (maxAllowedResponseTime - avgResponseTime) / maxAllowedResponseTime,
-        ) * 100
+            0,
+            (maxAllowedResponseTime - avgResponseTime) / maxAllowedResponseTime,
+          ) * 100
         : 0;
 
     // Combine completion rate and response time efficiency (50% weight each)

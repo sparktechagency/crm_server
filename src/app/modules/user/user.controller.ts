@@ -7,7 +7,11 @@ import { TAuthUser } from '../../interface/authUser';
 const updateUserActions = catchAsync(async (req, res) => {
   const { id } = req.params;
   const { action } = req.body;
-  const result = await UserService.updateUserActions(id, action, req.user as TAuthUser);
+  const result = await UserService.updateUserActions(
+    id,
+    action,
+    req.user as TAuthUser,
+  );
 
   sendResponse(res, {
     success: true,
