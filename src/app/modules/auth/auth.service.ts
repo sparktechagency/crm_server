@@ -13,9 +13,7 @@ import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
 
-const loginUser = async (
-  payload: Pick<TUser, 'email' | 'password'>,
-) => {
+const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
   // Step 1: Find user with password
   const user = await User.findOne({ email }).select('+password');

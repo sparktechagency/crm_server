@@ -3,8 +3,22 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserService } from './user.service';
 import { TAuthUser } from '../../interface/authUser';
+import { MulterFile } from '../../utils/uploadImage';
 
 const createFieldOfficer = catchAsync(async (req, res) => {
+  const fields = [
+    "image",
+    "cv"
+  ]
+
+  const files = req.files as { [fieldname: string]: MulterFile[] };
+
+  for (const field of fields) {
+    if (files[field]) {
+      req.body[field] = files[field][0].path;
+    }
+  }
+
   const result = await UserService.createFieldOfficer(req.body);
 
   sendResponse(res, {
