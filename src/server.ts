@@ -65,7 +65,7 @@ async function main() {
 
 main();
 // Seed Admin in database if not exist
-// seedAdmin();
+seedAdmin();
 
 // Handle unhandled promise rejection
 process.on('unhandledRejection', (err: any) => {

@@ -28,6 +28,7 @@ export type TUser = {
   isAssignSpoke: boolean;
   role: TRole;
   status: TStatus;
+  customFields: Map<string, unknown>;
 };
 
 export interface UserModel extends Model<TUser> {

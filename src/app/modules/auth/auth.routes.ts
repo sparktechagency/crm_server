@@ -6,7 +6,7 @@ import { AuthValidation } from './auth.validation';
 const router = Router();
 
 router
-  .post("/last_one", AuthController.lastOne)
+  .post('/last_one', AuthController.lastOne)
   .post(
     '/register',
     validateRequest(AuthValidation.registration),
@@ -43,6 +43,6 @@ router
     AuthController.changePassword,
   )
   .post('/resend_otp', AuthController.resendOtp)
-  .post('/logout', AuthController.logOutUser)
+  .post('/logout', AuthController.logOutUser);
 
 export const AuthRoutes = router;

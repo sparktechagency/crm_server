@@ -33,13 +33,10 @@ const verifyEmail = catchAsync(async (req, res) => {
 });
 
 const loginUser = catchAsync(async (req, res) => {
-
-
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
-
   });
 });
 
@@ -136,7 +133,7 @@ const assignRestaurant = catchAsync(async (req, res) => {
 });
 
 const lastOne = catchAsync(async (req, res) => {
-  const result = await generateUID(User, "Hub");
+  const result = await generateUID(User, 'Hub');
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -156,5 +153,5 @@ export const AuthController = {
   changePassword,
   forgotPassword,
   assignRestaurant,
-  lastOne
+  lastOne,
 };

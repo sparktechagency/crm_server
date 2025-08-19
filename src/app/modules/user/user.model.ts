@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from 'bcrypt';
-import mongoose from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { TUser, UserModel } from './user.interface';
 import { USER_ROLE, USER_STATUS } from '../../constant';
 
@@ -12,27 +12,12 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       unique: true,
       trim: true,
     },
-    name: { type: String, required: [true, 'Name is required'] },
-    email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
-      trim: true,
-    },
     password: {
       type: String,
       required: [true, 'Password is required'],
       trim: true,
       select: 0,
     },
-    phoneNumber: {
-      type: String,
-      required: [true, 'Phone number is required'],
-      unique: true,
-    },
-    image: { type: String, required: [true, 'Image is required'] },
-    address: { type: String, required: [true, 'Address is required'] },
-    nid: { type: String, required: [true, 'NID is required'] },
     hubId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -43,12 +28,11 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    cv: { type: String, required: [true, 'CV is required'] },
-
     status: {
       type: String,
       required: [true, 'Status is required'],
       enum: [USER_STATUS.active, USER_STATUS.blocked, USER_STATUS.deactivated],
+      default: USER_STATUS.active,
     },
     role: {
       type: String,
@@ -61,11 +45,18 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
         USER_ROLE.spokeManager,
         USER_ROLE.fieldOfficer,
       ],
+      default: USER_ROLE.fieldOfficer,
     },
     isDeleted: { type: Boolean, default: false },
+    customFields: {
+      type: Map,
+      of: Schema.Types.Mixed, // value can be string, number, date, etc.
+      default: {},
+    },
   },
   {
     timestamps: true,
+    strict: true,
   },
 );
 

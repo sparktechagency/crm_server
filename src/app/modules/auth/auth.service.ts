@@ -82,7 +82,6 @@ const verifyEmail = async (token: string, otp: { otp: number }) => {
   if (!isOtpValid) {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP not matched');
   }
-
 };
 
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
@@ -108,7 +107,6 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   if (!isPasswordValid) {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }
-
 };
 
 const logOutUser = async () => {

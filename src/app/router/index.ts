@@ -3,6 +3,7 @@ import { NotificationRoutes } from '../modules/notification/notification.routes'
 import { StaticContentRoutes } from '../modules/staticContent/staticContent.routes';
 import { UserRoutes } from '../modules/user/user.routes';
 import { AuthRoutes } from '../modules/auth/auth.routes';
+import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
 const router = Router();
 
 type TRoutes = {
@@ -12,12 +13,16 @@ type TRoutes = {
 
 const routes: TRoutes[] = [
   {
-    path: "/auth",
+    path: '/auth',
     route: AuthRoutes,
   },
   {
     path: '/users',
     route: UserRoutes,
+  },
+  {
+    path: '/users_field',
+    route: UserFieldRoutes,
   },
   {
     path: '/notification',
