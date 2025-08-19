@@ -13,11 +13,13 @@ import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
 
-const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
+const loginUser = async (
+  payload: Pick<TUser, 'email' | 'password'>,
+) => {
   const { email, password } = payload;
-
   // Step 1: Find user with password
   const user = await User.findOne({ email }).select('+password');
+  const userWithoutPassword = await User.findOne({ email }).select('-password');
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
   }
@@ -36,6 +38,15 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   if (!isPasswordValid) {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }
+
+  // Step 4: Generate token
+  const tokenGenerate = generateToken(
+    { ...(userWithoutPassword as any)._doc },
+    config.jwt.access_token as Secret,
+    config.jwt.access_expires_in as string,
+  );
+
+  return { accessToken: tokenGenerate };
 };
 
 const forgotPassword = async (email: string) => {
@@ -208,7 +219,6 @@ const resendOtp = async (
     otp,
   );
 };
-
 
 export const AuthService = {
   resendOtp,

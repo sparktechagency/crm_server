@@ -31,6 +31,6 @@ router
     validateRequest(AuthValidation.changePasswordValidation),
     AuthController.changePassword,
   )
-  .post('/resend_otp', AuthController.resendOtp)
+  .post('/resend_otp', AuthController.resendOtp);
 
 export const AuthRoutes = router;

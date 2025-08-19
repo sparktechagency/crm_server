@@ -4,10 +4,15 @@ import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
 
 const loginUser = catchAsync(async (req, res) => {
+  const { accessToken } = await AuthService.loginUser(req.body);
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
+    data: {
+      accessToken,
+    },
   });
 });
 
@@ -77,7 +82,6 @@ const resendOtp = catchAsync(async (req, res) => {
     data: result,
   });
 });
-
 
 export const AuthController = {
   resendOtp,
