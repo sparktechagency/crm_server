@@ -1,20 +1,5 @@
 import { z } from 'zod';
 
-const registration = z.object({
-  body: z
-    .object({
-      email: z.string({ required_error: 'Email is required' }).email().max(50),
-      password: z.string({ required_error: 'Password is required' }).min(8),
-      confirmPassword: z.string({
-        required_error: 'Confirm password is required',
-      }),
-      role: z.enum(['customer', 'driver', 'company']),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: 'Passwords do not match',
-      path: ['confirmPassword'],
-    }),
-});
 
 const otpValidation = z.object({
   body: z.object({
@@ -67,7 +52,6 @@ const changePasswordValidation = z.object({
 });
 
 export const AuthValidation = {
-  registration,
   loginValidation,
   otpValidation,
   forgotPasswordValidation,
