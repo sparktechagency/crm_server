@@ -6,10 +6,7 @@ import { TAuthUser } from '../../interface/authUser';
 import { MulterFile } from '../../utils/uploadImage';
 
 const createFieldOfficer = catchAsync(async (req, res) => {
-  const fields = [
-    "image",
-    "cv"
-  ]
+  const fields = ['image', 'cv'];
 
   const files = req.files as { [fieldname: string]: MulterFile[] };
 
@@ -19,7 +16,7 @@ const createFieldOfficer = catchAsync(async (req, res) => {
     }
   }
 
-  const result = await UserService.createFieldOfficer(req.body);
+  const result = await UserService.createUsers(req.body);
 
   sendResponse(res, {
     success: true,

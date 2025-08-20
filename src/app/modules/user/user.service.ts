@@ -9,7 +9,7 @@ import sendMail from '../../utils/sendMail';
 import { passwordSend } from '../../../shared/html/passwordSendingHtml';
 import { uidForUserRole } from './user.utils';
 
-const createFieldOfficer = async (payload: Record<string, unknown>) => {
+const createUsers = async (payload: Record<string, unknown>) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
   const { email, phoneNumber, role, ...rest } = payload;
 
@@ -32,10 +32,8 @@ const createFieldOfficer = async (payload: Record<string, unknown>) => {
     html: passwordSend(generatePassword),
   });
 
-
   const createUser = await User.create(userData);
   return createUser;
-
 };
 
 const updateUserActions = async (
@@ -73,5 +71,5 @@ const updateUserActions = async (
 
 export const UserService = {
   updateUserActions,
-  createFieldOfficer,
+  createUsers,
 };
