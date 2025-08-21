@@ -60,6 +60,7 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       default: USER_ROLE.fieldOfficer,
     },
     isDeleted: { type: Boolean, default: false },
+    isAssignSpoke: { type: Boolean, default: false },
     customFields: {
       type: Map,
       of: Schema.Types.Mixed, // value can be string, number, date, etc.

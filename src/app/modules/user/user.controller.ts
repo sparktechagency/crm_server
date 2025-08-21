@@ -43,7 +43,33 @@ const updateUserActions = catchAsync(async (req, res) => {
   });
 });
 
+const getUsersBaseOnRole = catchAsync(async (req, res) => {
+  const result = await UserService.getUsersBaseOnRole(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Users fetched successfully',
+    data: result,
+  });
+});
+
+const assignSpoke = catchAsync(async (req, res) => {
+
+  const result = await UserService.assignSpoke(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Spoke assigned successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateUserActions,
   createFieldOfficer,
+  getUsersBaseOnRole,
+  assignSpoke
 };

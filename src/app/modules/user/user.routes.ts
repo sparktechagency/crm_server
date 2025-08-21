@@ -20,6 +20,22 @@ router
     parseFormData,
     UserController.createFieldOfficer,
   )
+  .get(
+    '/',
+    auth(
+      USER_ROLE.hr,
+      USER_ROLE.admin,
+      USER_ROLE.hubManager,
+      USER_ROLE.spokeManager,
+    ),
+    UserController.getUsersBaseOnRole,
+  )
+  .patch(
+    '/assign_spoke',
+    auth(USER_ROLE.hubManager),
+    parseFormData,
+    UserController.assignSpoke,
+  )
   .patch(
     '/actions/:id',
     auth(USER_ROLE.admin),

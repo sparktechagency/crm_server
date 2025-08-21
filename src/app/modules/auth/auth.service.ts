@@ -13,11 +13,46 @@ import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
 
+// const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
+//   const { email, password } = payload;
+//   // Step 1: Find user with password
+//   const user = await User.findOne({ email }).select('+password');
+//   const userWithoutPassword = await User.findOne({ email }).select('-password');
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
+//   }
+
+//   // Step 2: Validate user status
+//   if (user.isDeleted) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted!');
+//   }
+
+//   if (user.status === USER_STATUS.blocked) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked!');
+//   }
+
+//   // Step 3: Check password
+//   const isPasswordValid = await isMatchedPassword(password, user.password);
+//   if (!isPasswordValid) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
+//   }
+
+//   // Step 4: Generate token
+//   const tokenGenerate = generateToken(
+//     { ...(userWithoutPassword as any)._doc },
+//     config.jwt.access_token as Secret,
+//     config.jwt.access_expires_in as string,
+//   );
+
+//   return { accessToken: tokenGenerate };
+// };
+
+
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
-  // Step 1: Find user with password
+
+  // Step 1: Find user (include password for validation)
   const user = await User.findOne({ email }).select('+password');
-  const userWithoutPassword = await User.findOne({ email }).select('-password');
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
   }
@@ -37,14 +72,18 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }
 
-  // Step 4: Generate token
-  const tokenGenerate = generateToken(
-    { ...(userWithoutPassword as any)._doc },
+  // Step 4: Convert user to object and remove password
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const { password: _, ...userData } = user.toObject();
+
+  // Step 5: Generate token
+  const accessToken = generateToken(
+    userData,
     config.jwt.access_token as Secret,
-    config.jwt.access_expires_in as string,
+    config.jwt.access_expires_in as string
   );
 
-  return { accessToken: tokenGenerate };
+  return { accessToken };
 };
 
 const forgotPassword = async (email: string) => {
