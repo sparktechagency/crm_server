@@ -12,82 +12,45 @@ import { isMatchedPassword } from '../../utils/matchPassword';
 import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
-import { TRegister } from './auth.interface';
 
-const registerUser = async (payload: TRegister) => {
-  const isUserExist = await User.findOne({ email: payload.email });
-  if (isUserExist) {
-    throw new AppError(httpStatus.CONFLICT, 'User already exist');
-  }
+// const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
+//   const { email, password } = payload;
+//   // Step 1: Find user with password
+//   const user = await User.findOne({ email }).select('+password');
+//   const userWithoutPassword = await User.findOne({ email }).select('-password');
+//   if (!user) {
+//     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
+//   }
 
-  const signUpData = {
-    email: payload.email,
-    password: payload.password,
-    role: payload.role,
-  };
+//   // Step 2: Validate user status
+//   if (user.isDeleted) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted!');
+//   }
 
-  const signUpToken = generateToken(
-    signUpData,
-    config.jwt.sing_up_token as Secret,
-    config.jwt.sing_up_expires_in as string,
-  );
+//   if (user.status === USER_STATUS.blocked) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked!');
+//   }
 
-  const checkOtp = await OtpService.checkOtpByEmail(payload.email);
+//   // Step 3: Check password
+//   const isPasswordValid = await isMatchedPassword(password, user.password);
+//   if (!isPasswordValid) {
+//     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
+//   }
 
-  if (checkOtp) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Otp already exist');
-  }
+//   // Step 4: Generate token
+//   const tokenGenerate = generateToken(
+//     { ...(userWithoutPassword as any)._doc },
+//     config.jwt.access_token as Secret,
+//     config.jwt.access_expires_in as string,
+//   );
 
-  const otp = Math.floor(100000 + Math.random() * 900000);
-
-  const emailBody = {
-    email: payload.email,
-    html: emailVerifyHtml('Email Verification', otp),
-  };
-  const otpExpiryTime = parseInt(config.otp_expire_in as string) || 3;
-
-  await OtpService.sendOTP(
-    emailBody,
-    otpExpiryTime,
-    'email',
-    'email-verification',
-    otp,
-  );
-
-  return { signUpToken };
-};
-
-const verifyEmail = async (token: string, otp: { otp: number }) => {
-  // Step 1: Decode token
-  const decodedUser = decodeToken(
-    token,
-    config.jwt.sing_up_token as Secret,
-  ) as JwtPayload;
-
-  if (!decodedUser) {
-    throw new AppError(httpStatus.UNAUTHORIZED, 'Invalid token');
-  }
-
-  // Step 2: Check OTP
-  const existingOtp = await OtpService.checkOtpByEmail(decodedUser.email);
-  if (!existingOtp) {
-    throw new AppError(httpStatus.NOT_FOUND, "OTP doesn't exist");
-  }
-
-  const isOtpValid = await OtpService.verifyOTP(
-    otp.otp,
-    existingOtp._id.toString(),
-  );
-
-  if (!isOtpValid) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'OTP not matched');
-  }
-};
+//   return { accessToken: tokenGenerate };
+// };
 
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
 
-  // Step 1: Find user with password
+  // Step 1: Find user (include password for validation)
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
@@ -107,10 +70,19 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   if (!isPasswordValid) {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }
-};
 
-const logOutUser = async () => {
-  return {};
+  // Step 4: Convert user to object and remove password
+  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+  const { password: _, ...userData } = user.toObject();
+
+  // Step 5: Generate token
+  const accessToken = generateToken(
+    userData,
+    config.jwt.access_token as Secret,
+    config.jwt.access_expires_in as string,
+  );
+
+  return { accessToken };
 };
 
 const forgotPassword = async (email: string) => {
@@ -284,26 +256,11 @@ const resendOtp = async (
   );
 };
 
-const assignRestaurant = async (
-  userId: string,
-  payload: { myRestaurant: string },
-) => {
-  return await User.findByIdAndUpdate(
-    userId,
-    { ...payload, isSocialLogin: false },
-    { new: true },
-  );
-};
-
 export const AuthService = {
   resendOtp,
   loginUser,
   verifyOtp,
-  logOutUser,
-  verifyEmail,
-  registerUser,
   resetPassword,
   forgotPassword,
   changePassword,
-  assignRestaurant,
 };

@@ -2,55 +2,17 @@ import httpStatus from 'http-status';
 import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { AuthService } from './auth.service';
-import config from '../../../config';
-import generateUID from '../../utils/generateUID';
-import User from '../user/user.model';
-
-const registerUser = catchAsync(async (req, res) => {
-  const result = await AuthService.registerUser(req.body);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.CREATED,
-    message: 'check your email to verify your account',
-    data: {
-      signUpToken: result.signUpToken,
-    },
-  });
-});
-
-const verifyEmail = catchAsync(async (req, res) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  const otp = req.body;
-  const result = await AuthService.verifyEmail(token as string, otp);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Email verified successfully',
-    data: result,
-  });
-});
 
 const loginUser = catchAsync(async (req, res) => {
+  const { accessToken } = await AuthService.loginUser(req.body);
+
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
-  });
-});
-
-const logOutUser = catchAsync(async (req, res) => {
-  res.cookie('refreshToken', '', {
-    secure: config.NODE_ENV === 'production',
-    httpOnly: true,
-    expires: new Date(0),
-  });
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'User logged out successfully',
+    data: {
+      accessToken,
+    },
   });
 });
 
@@ -121,37 +83,11 @@ const resendOtp = catchAsync(async (req, res) => {
   });
 });
 
-const assignRestaurant = catchAsync(async (req, res) => {
-  const result = await AuthService.assignRestaurant(req.user.userId, req.body);
-
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Restaurent Assign successfully',
-    data: result,
-  });
-});
-
-const lastOne = catchAsync(async (req, res) => {
-  const result = await generateUID(User, 'Hub');
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.OK,
-    message: 'Restaurent Assign successfully',
-    data: result,
-  });
-});
-
 export const AuthController = {
   resendOtp,
   verifyOtp,
   loginUser,
-  logOutUser,
-  verifyEmail,
-  registerUser,
   resetPassword,
   changePassword,
   forgotPassword,
-  assignRestaurant,
-  lastOne,
 };

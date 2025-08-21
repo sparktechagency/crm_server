@@ -1,66 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
-import { deleteCache } from '../../../redis';
+import { cacheData, deleteCache, getCachedData } from '../../../redis';
+import { passwordSend } from '../../../shared/html/passwordSendingHtml';
+import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
 import generateUID from '../../utils/generateUID';
-import User from './user.model';
 import sendMail from '../../utils/sendMail';
+import User from './user.model';
+import { findUserWithUid, uidForUserRole } from './user.utils';
+import { minuteToSecond } from '../../utils/minitToSecond';
+import { TUser } from './user.interface';
 
-const createFieldOfficer = async (payload: any) => {
+const createUsers = async (payload: Record<string, unknown>) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
+  const { email, phoneNumber, role, spokeUid, hubUid, ...rest } = payload;
+
+  const uidKey = uidForUserRole(payload.role as string);
+  const uid = hubUid ? hubUid : spokeUid;
+  const data = await findUserWithUid(uid as string);
 
   const userData = {
-    uid: await generateUID(User, 'FO'),
+    uid: await generateUID(User, uidKey),
     password: generatePassword,
+    email,
+    ...data,
+    phoneNumber,
+    role,
+    hubUid,
+    spokeUid,
     customFields: {
-      ...payload,
+      ...rest,
     },
   };
 
   await sendMail({
-    email: payload.email,
+    email: payload.email as string,
     subject: 'Change Your Password Please',
-    html: `
-  <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Password Reset Request</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f7fa;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-    <tr>
-      <td style="padding: 40px; text-align: center;">
-        <h1 style="color: #2c3e50; font-size: 24px; margin: 0 0 20px;">🔐 Password Reset Required</h1>
-        <p style="font-size: 16px; color: #34495e; line-height: 1.6; margin: 0 0 30px;">
-          Hello,<br><br>
-          For security reasons, please change your password as soon as possible.
-        </p>
-        <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 0 0 30px;">
-          Your temporary password is:<br>
-          <span style="font-size: 22px; font-family: monospace;">${generatePassword}</span>
-        </p>
-        <p style="font-size: 14px; color: #7f8c8d; line-height: 1.6; margin: 30px 0 0;">
-          If you did not request this change, you can safely ignore this email.
-        </p>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding: 20px; text-align: center; background-color: #f4f7fa; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
-        <p style="font-size: 12px; color: #95a5a6; margin: 0;">
-          &copy; 2025 Your Company. All rights reserved.
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-`,
+    html: passwordSend(generatePassword),
   });
 
-  return userData;
+  const createUser = await User.create(userData);
+  return createUser;
 };
 
 const updateUserActions = async (
@@ -77,7 +59,7 @@ const updateUserActions = async (
     throw new AppError(httpStatus.BAD_REQUEST, `User already ${action}`);
   }
 
-  const cacheKey = `getAllDrivers-${authUser.userId}`;
+  const cacheKey = `getAllDrivers-${authUser._id}`;
   switch (action) {
     case 'blocked':
       user.status = 'blocked';
@@ -96,7 +78,84 @@ const updateUserActions = async (
   return user;
 };
 
+const getUsersBaseOnRole = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const { role } = query;
+  const cacheKey = `users::${user._id}`;
+  // Try to fetch from Redis cache first
+  const cached = await getCachedData<{ result: TUser[] }>(cacheKey);
+  if (cached) {
+    console.log('🚀 Serving from Redis cache');
+    return cached;
+  }
+
+  // Build match stage dynamically
+  const matchStage: Record<string, unknown> =
+    user.role === USER_ROLE.hubManager
+      ? { hubId: user._id }
+      : user.role === USER_ROLE.spokeManager
+        ? { spokeId: user._id }
+        : {};
+
+  const userQuery = new QueryBuilder(User.find({ ...matchStage, role }), query)
+    .search(['customFields.name', 'email', 'phoneNumber'])
+    .sort()
+    .paginate()
+    .filter(['status']);
+
+  // Run both queries in parallel (faster than awaiting sequentially)
+  const [result, meta] = await Promise.all([
+    userQuery.queryModel,
+    userQuery.countTotal(),
+  ]);
+
+  const time = minuteToSecond(5);
+  await cacheData(cacheKey, { meta, result }, time);
+
+  return { meta, result };
+};
+
+const updateUsers = async (id: string, payload: Record<string, unknown>) => {
+  const { email, phoneNumber, ...rest } = payload;
+
+  const userData = {
+    email,
+    phoneNumber,
+    customFields: {
+      ...rest,
+    },
+  };
+
+  const result = await User.findByIdAndUpdate(id, userData, { new: true });
+  return result;
+};
+
+const assignSpoke = async (payload: {
+  spokeUid: string;
+  fieldOfficerId: string;
+}) => {
+  const spokeManager = await User.findOne({ uid: payload.spokeUid });
+  if (!spokeManager) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Spoke Manager not found with this uid',
+    );
+  }
+
+  const result = await User.findOneAndUpdate(
+    { _id: payload.fieldOfficerId },
+    { spokeUid: payload.spokeUid, spokeId: spokeManager._id },
+    { new: true },
+  );
+  return result;
+};
+
 export const UserService = {
   updateUserActions,
-  createFieldOfficer,
+  createUsers,
+  getUsersBaseOnRole,
+  updateUsers,
+  assignSpoke,
 };

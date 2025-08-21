@@ -18,6 +18,18 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       trim: true,
       select: 0,
     },
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+      trim: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: [true, 'Phone number is required'],
+      unique: true,
+      trim: true,
+    },
     hubId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -48,6 +60,7 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       default: USER_ROLE.fieldOfficer,
     },
     isDeleted: { type: Boolean, default: false },
+    isAssignSpoke: { type: Boolean, default: false },
     customFields: {
       type: Map,
       of: Schema.Types.Mixed, // value can be string, number, date, etc.

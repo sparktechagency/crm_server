@@ -3,9 +3,20 @@ import catchAsync from '../../utils/catchAsync';
 import sendResponse from '../../utils/sendResponse';
 import { UserService } from './user.service';
 import { TAuthUser } from '../../interface/authUser';
+import { MulterFile } from '../../utils/uploadImage';
 
 const createFieldOfficer = catchAsync(async (req, res) => {
-  const result = await UserService.createFieldOfficer(req.body);
+  const fields = ['image', 'cv'];
+
+  const files = req.files as { [fieldname: string]: MulterFile[] };
+
+  for (const field of fields) {
+    if (files[field]) {
+      req.body[field] = files[field][0].path;
+    }
+  }
+
+  const result = await UserService.createUsers(req.body);
 
   sendResponse(res, {
     success: true,
@@ -32,7 +43,32 @@ const updateUserActions = catchAsync(async (req, res) => {
   });
 });
 
+const getUsersBaseOnRole = catchAsync(async (req, res) => {
+  const result = await UserService.getUsersBaseOnRole(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Users fetched successfully',
+    data: result,
+  });
+});
+
+const assignSpoke = catchAsync(async (req, res) => {
+  const result = await UserService.assignSpoke(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Spoke assigned successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateUserActions,
   createFieldOfficer,
+  getUsersBaseOnRole,
+  assignSpoke,
 };

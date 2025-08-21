@@ -1,7 +1,7 @@
 import mongoose, { InferSchemaType, Schema } from 'mongoose';
 import { TFieldInterface } from '../../../../shared/validation/commonZodValidation';
 
-const UserFieldSchema = new Schema<TFieldInterface>(
+const LeadsFieldsSchema = new Schema<TFieldInterface>(
   {
     label: { type: String, required: true, unique: true },
     inputName: { type: String, required: true, unique: true }, // this is schema name also
@@ -19,5 +19,8 @@ const UserFieldSchema = new Schema<TFieldInterface>(
   { timestamps: true },
 );
 
-export type TUserField = InferSchemaType<typeof UserFieldSchema>;
-export const UserField = mongoose.model('UserField', UserFieldSchema);
+export type TLeadsAndClientsField = InferSchemaType<typeof LeadsFieldsSchema>;
+export const LeadsAndClientsField = mongoose.model(
+  'LeadsAndClientsField',
+  LeadsFieldsSchema,
+);
