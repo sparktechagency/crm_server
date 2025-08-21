@@ -146,7 +146,11 @@ const assignSpoke = async (payload: {
 
   const result = await User.findOneAndUpdate(
     { _id: payload.fieldOfficerId },
-    { spokeUid: payload.spokeUid, spokeId: spokeManager._id },
+    {
+      spokeUid: payload.spokeUid,
+      spokeId: spokeManager._id,
+      isAssignSpoke: true,
+    },
     { new: true },
   );
   return result;

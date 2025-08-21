@@ -6,6 +6,7 @@ import { AuthRoutes } from '../modules/auth/auth.routes';
 import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
 import { HubManagerRoutes } from '../modules/hubManager/hubManager.routes';
 import { LeadsAndClientsFieldRoutes } from '../modules/leadsAndClients/leadsAndClientsFields/LeadsAndClientsField.routes';
+import { LoansRoutes } from '../modules/loans/loans.routes';
 const router = Router();
 
 type TRoutes = {
@@ -34,6 +35,11 @@ const routes: TRoutes[] = [
     path: '/static_content',
     route: StaticContentRoutes,
   },
+  {
+    path: '/loans',
+    route: LoansRoutes,
+  },
+
   // fields related routes
   {
     path: '/users_field',

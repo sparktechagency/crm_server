@@ -6,7 +6,7 @@ const createLoan = async (
   payload: Pick<TLoan, 'title' | 'features'>,
 ): Promise<TLoan> => {
   const result = await Loan.create({
-    loanUid: await generateUID(Loan, 'loan'),
+    uid: await generateUID(Loan, 'loan'),
     title: payload.title,
     features: payload.features,
   });
