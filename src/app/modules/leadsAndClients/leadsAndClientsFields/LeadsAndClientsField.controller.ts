@@ -10,7 +10,7 @@ const addLeadsAndClientsField = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User field added successfully',
+    message: 'Leads field added successfully',
     data: result,
   });
 });
@@ -20,7 +20,7 @@ const getLeadsAndClientsFields = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User fields fetched successfully',
+    message: 'Leads fields fetched successfully',
     data: result,
   });
 });
@@ -34,7 +34,7 @@ const updateLeadsAndClientsField = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User field updated successfully',
+    message: 'Leads field updated successfully',
     data: result,
   });
 });
@@ -46,7 +46,7 @@ const deleteLeadsAndClientsField = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'User field deleted successfully',
+    message: 'Leads field deleted successfully',
     data: result,
   });
 });

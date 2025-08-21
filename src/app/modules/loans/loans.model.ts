@@ -16,7 +16,7 @@ const loanSchema = new Schema<TLoan>(
       type: [String],
       required: [true, 'Features are required'],
     },
-    isDeleted: {
+    isActive: {
       type: Boolean,
       default: false,
     },

@@ -2,7 +2,10 @@ import { Router } from 'express';
 import { LeadsAndClientsFieldController } from './LeadsAndClientsField.controller';
 import { auth } from '../../../middleware/auth';
 import { USER_ROLE } from '../../../constant';
-import { CreateFieldSchema, UpdateFieldSchema } from '../../../../shared/validation/commonZodValidation';
+import {
+  CreateFieldSchema,
+  UpdateFieldSchema,
+} from '../../../../shared/validation/commonZodValidation';
 import validateRequest from '../../../middleware/validation';
 
 const router = Router();
