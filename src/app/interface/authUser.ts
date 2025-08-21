@@ -1,4 +1,4 @@
-import { TRole, TStatus } from "../modules/user/user.interface";
+import { TRole, TStatus } from '../modules/user/user.interface';
 
 export type TAuthUser = {
   isAssignSpoke: boolean;
@@ -7,7 +7,7 @@ export type TAuthUser = {
   email: string;
   phoneNumber: string;
   status: TStatus;
-  role: TRole
+  role: TRole;
   isDeleted: boolean;
   customFields: {
     name: string;

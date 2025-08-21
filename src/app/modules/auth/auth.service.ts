@@ -47,7 +47,6 @@ import User from '../user/user.model';
 //   return { accessToken: tokenGenerate };
 // };
 
-
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
 
@@ -80,7 +79,7 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const accessToken = generateToken(
     userData,
     config.jwt.access_token as Secret,
-    config.jwt.access_expires_in as string
+    config.jwt.access_expires_in as string,
   );
 
   return { accessToken };

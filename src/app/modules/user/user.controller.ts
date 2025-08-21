@@ -57,7 +57,6 @@ const getUsersBaseOnRole = catchAsync(async (req, res) => {
 });
 
 const assignSpoke = catchAsync(async (req, res) => {
-
   const result = await UserService.assignSpoke(req.body);
   sendResponse(res, {
     success: true,
@@ -71,5 +70,5 @@ export const UserController = {
   updateUserActions,
   createFieldOfficer,
   getUsersBaseOnRole,
-  assignSpoke
+  assignSpoke,
 };

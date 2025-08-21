@@ -13,7 +13,6 @@ import { findUserWithUid, uidForUserRole } from './user.utils';
 import { minuteToSecond } from '../../utils/minitToSecond';
 import { TUser } from './user.interface';
 
-
 const createUsers = async (payload: Record<string, unknown>) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
   const { email, phoneNumber, role, spokeUid, hubUid, ...rest } = payload;
@@ -100,10 +99,7 @@ const getUsersBaseOnRole = async (
         ? { spokeId: user._id }
         : {};
 
-  const userQuery = new QueryBuilder(
-    User.find({ ...matchStage, role }),
-    query,
-  )
+  const userQuery = new QueryBuilder(User.find({ ...matchStage, role }), query)
     .search(['customFields.name', 'email', 'phoneNumber'])
     .sort()
     .paginate()
@@ -122,7 +118,6 @@ const getUsersBaseOnRole = async (
 };
 
 const updateUsers = async (id: string, payload: Record<string, unknown>) => {
-
   const { email, phoneNumber, ...rest } = payload;
 
   const userData = {
@@ -137,10 +132,16 @@ const updateUsers = async (id: string, payload: Record<string, unknown>) => {
   return result;
 };
 
-const assignSpoke = async (payload: { spokeUid: string, fieldOfficerId: string }) => {
+const assignSpoke = async (payload: {
+  spokeUid: string;
+  fieldOfficerId: string;
+}) => {
   const spokeManager = await User.findOne({ uid: payload.spokeUid });
   if (!spokeManager) {
-    throw new AppError(httpStatus.NOT_FOUND, 'Spoke Manager not found with this uid');
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Spoke Manager not found with this uid',
+    );
   }
 
   const result = await User.findOneAndUpdate(
@@ -149,12 +150,12 @@ const assignSpoke = async (payload: { spokeUid: string, fieldOfficerId: string }
     { new: true },
   );
   return result;
-}
+};
 
 export const UserService = {
   updateUserActions,
   createUsers,
   getUsersBaseOnRole,
   updateUsers,
-  assignSpoke
+  assignSpoke,
 };
