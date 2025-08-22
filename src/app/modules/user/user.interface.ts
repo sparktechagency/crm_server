@@ -20,9 +20,9 @@ export type TUser = {
   address: string;
   nid: string;
   hubId: ObjectId;
+  spokeId: ObjectId;
   hubUid: string;
   spokeUid: string;
-  spokeId: ObjectId;
   cv: string;
   isDeleted: boolean;
   isAssignSpoke: boolean;

@@ -7,6 +7,7 @@ import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
 import { HubManagerRoutes } from '../modules/hubManager/hubManager.routes';
 import { LeadsAndClientsFieldRoutes } from '../modules/leadsAndClients/leadsAndClientsFields/LeadsAndClientsField.routes';
 import { LoansRoutes } from '../modules/loans/loans.routes';
+import { LeadsAndClientsRoutes } from '../modules/leadsAndClients/leadsAndClients.routes';
 const router = Router();
 
 type TRoutes = {
@@ -38,6 +39,10 @@ const routes: TRoutes[] = [
   {
     path: '/loans',
     route: LoansRoutes,
+  },
+  {
+    path: '/leads_and_clients',
+    route: LeadsAndClientsRoutes,
   },
 
   // fields related routes

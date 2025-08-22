@@ -6,11 +6,14 @@ const allFieldOfficerRequest = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
+  const { isAssignSpoke } = query;
+
+  const spokeStatus = isAssignSpoke === 'true' ? true : false;
   const fieldOfficerQuery = new QueryBuilder(
     User.find({
       role: 'fieldOfficer',
       hubId: user._id,
-      isAssignSpoke: false,
+      isAssignSpoke: spokeStatus,
     }),
     query,
   )
