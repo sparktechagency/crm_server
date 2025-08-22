@@ -9,7 +9,7 @@ export type TAuthUser = {
   hubId: string;
   hubUid: string;
   status: TStatus;
-  role: TRole
+  role: TRole;
   isDeleted: boolean;
   isAssignSpoke: boolean;
   customFields: Record<string, any>;

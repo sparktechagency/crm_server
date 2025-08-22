@@ -5,17 +5,28 @@ import { LeadsAndClientsController } from './leadsAndClients.controller';
 import fileUpload from '../../utils/uploadImage';
 import parseFormData from '../../middleware/parsedData';
 
-
 const upload = fileUpload('./public/uploads/images/');
 
 const router = Router();
 
-router.post(
+router
+  .post(
     '/create',
     auth(USER_ROLE.fieldOfficer),
     upload.single('image'),
     parseFormData,
     LeadsAndClientsController.createLeadsAndClients,
-).get("/", auth(USER_ROLE.fieldOfficer), )
+  )
+  .get(
+    '/',
+    auth(USER_ROLE.fieldOfficer),
+    LeadsAndClientsController.getLeadsAndClients,
+  )
+  .patch(
+    '/update/:id',
+    auth(USER_ROLE.fieldOfficer),
+    parseFormData,
+    LeadsAndClientsController.updateLeadsOrClients,
+  );
 
 export const LeadsAndClientsRoutes = router;

@@ -39,14 +39,12 @@ const LeadsAndClientsSchema = new Schema<LeadsAndClients, ILeadsAndClients>(
       type: Map,
       of: Schema.Types.Mixed, // value can be string, number, date, etc.
       default: {},
-    }
+    },
   },
   {
     timestamps: true,
   },
 );
-
-
 
 LeadsAndClientsSchema.statics.findLastOne = async function () {
   return await this.findOne({}, null, { bypassMiddleware: true })
@@ -54,9 +52,7 @@ LeadsAndClientsSchema.statics.findLastOne = async function () {
     .sort({ createdAt: -1 })
     .limit(1)
     .lean();
-}
-
-
+};
 
 const LeadsAndClientsModel = model<LeadsAndClients, ILeadsAndClients>(
   'LeadsAndClients',
