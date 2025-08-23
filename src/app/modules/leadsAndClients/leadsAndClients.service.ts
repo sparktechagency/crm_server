@@ -1,20 +1,23 @@
+import mongoose from 'mongoose';
 import { cacheData, deleteCache, getCachedData } from '../../../redis';
 import { TAuthUser } from '../../interface/authUser';
 import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
 import { minuteToSecond } from '../../utils/minitToSecond';
-import { LeadsAndClients } from './leadsAndClients.interface';
+import { TMeta } from '../../utils/sendResponse';
+import { IReturnTypeLeadsAndClients, LeadsAndClients } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
-) => {
+  session?: mongoose.ClientSession
+): Promise<LeadsAndClients> => {
   const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
-    uid: await generateUID(LeadsAndClientsModel, 'ID'),
+    uid: await generateUID(LeadsAndClientsModel, "ID"),
     email,
     phoneNumber,
     hubId: user.hubId,
@@ -25,21 +28,32 @@ const createLeadsAndClients = async (
     },
   };
 
-  const result = await LeadsAndClientsModel.create(leadClientData);
+  let result: LeadsAndClients;
 
-  // Remove Redis cache
+  if (session) {
+    const docs = await LeadsAndClientsModel.create([leadClientData], { session });
+    result = docs[0] as LeadsAndClients;
+  } else {
+    const doc = await LeadsAndClientsModel.create(leadClientData);
+    result = doc as LeadsAndClients;
+  }
+
   await deleteCache(cacheKey);
 
   return result;
 };
 
+
 const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
-) => {
+): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
   const cacheKey = `leadsAndClients::${user._id}`;
   // Try to fetch from Redis cache first
-  const cached = await getCachedData<{ result: LeadsAndClients[] }>(cacheKey);
+  const cached = await getCachedData<{
+    meta: TMeta;
+    result: LeadsAndClients[];
+  }>(cacheKey);
   if (cached) {
     console.log('🚀 Serving from Redis cache');
     return cached;
@@ -72,16 +86,26 @@ const updateLeadsOrClients = async (
   id: string,
   payload: Record<string, unknown>,
   user: TAuthUser,
-) => {
+): Promise<LeadsAndClients | null> => {
+  const findLeads = await LeadsAndClientsModel.findById(id);
+
+  if (!findLeads) {
+    throw new Error('Leads not found');
+  }
+
   const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const updateQuery: Record<string, any> = {};
+  for (const key in rest) {
+    updateQuery[`customFields.${key}`] = rest[key];
+  }
 
   const leadClientData = {
     email,
     phoneNumber,
-    customFields: {
-      ...rest,
-    },
+    ...updateQuery,
   };
 
   const result = await LeadsAndClientsModel.findOneAndUpdate(
@@ -95,8 +119,31 @@ const updateLeadsOrClients = async (
   return result;
 };
 
+const deleteLeadsAndClient = async (
+  id: string,
+  user: TAuthUser,
+): Promise<LeadsAndClients | null> => {
+  const cacheKey = `leadsAndClients::${user._id}`;
+
+  const result = await LeadsAndClientsModel.findOneAndDelete({
+    _id: id,
+    fieldOfficerId: user._id,
+    isClient: false,
+  });
+
+  // Remove Redis cache
+  await deleteCache(cacheKey);
+  return result;
+};
+
+const getLeadsUsingUId = (uid: string): Promise<IReturnTypeLeadsAndClients | null> => {
+  return LeadsAndClientsModel.findOne({ uid });
+}
+
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
   updateLeadsOrClients,
+  deleteLeadsAndClient,
+  getLeadsUsingUId
 };

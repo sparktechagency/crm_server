@@ -3,22 +3,34 @@ import { TLoanApplication } from './loanApplication.interface';
 
 const LoanApplicationSchema = new Schema<TLoanApplication>(
   {
+    uid: {
+      type: String,
+      required: [true, 'Loan application UID is required'],
+      unique: true,
+    },
     clientId: {
       type: Schema.Types.ObjectId,
       ref: 'LeadsAndClients',
+      required: [true, 'Client id is required'],
     },
     hubId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: [true, 'Hub id is required'],
     },
     spokeId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: [true, 'Spoke id is required'],
     },
-    loanApplicationUid: {
+    fieldOfficerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Field officer id is required'],
+    },
+    leadUid: {
       type: String,
-      required: [true, 'Loan application UID is required'],
-      unique: true,
+      required: [true, 'Lead UID is required'],
     },
     applicantStatus: {
       type: String,
@@ -80,16 +92,19 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
     },
     term: { type: String, required: [true, 'Term is required'] },
     nid: { type: String, required: [true, 'NID is required'] },
-    leadUid: {
-      type: String,
-      required: [true, 'Lead UID is required'],
-      unique: true,
-    },
   },
   {
     timestamps: true,
   },
 );
+
+LoanApplicationSchema.statics.findLastOne = async function () {
+  return await this.findOne({}, null, { bypassMiddleware: true })
+    .select('uid')
+    .sort({ createdAt: -1 })
+    .limit(1)
+    .lean();
+};
 
 export const LoanApplication = model<TLoanApplication>(
   'LoanApplication',

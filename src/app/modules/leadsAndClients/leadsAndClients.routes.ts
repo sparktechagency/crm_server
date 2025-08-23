@@ -25,8 +25,14 @@ router
   .patch(
     '/update/:id',
     auth(USER_ROLE.fieldOfficer),
+    upload.single('image'),
     parseFormData,
     LeadsAndClientsController.updateLeadsOrClients,
+  )
+  .delete(
+    '/delete/:id',
+    auth(USER_ROLE.fieldOfficer),
+    LeadsAndClientsController.deleteLeadsOrClients,
   );
 
 export const LeadsAndClientsRoutes = router;

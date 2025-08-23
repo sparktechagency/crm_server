@@ -12,6 +12,13 @@ export type LeadsAndClients = {
   customFields: Map<string, unknown>;
 };
 
+export interface IReturnTypeLeadsAndClients extends LeadsAndClients {
+  _id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  __v: number;
+}
+
 export interface ILeadsAndClients extends Model<LeadsAndClients> {
   findLastOne(): Promise<LeadsAndClients>;
 }
