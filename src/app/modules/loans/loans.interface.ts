@@ -1,6 +1,12 @@
+import { Model } from 'mongoose';
+
 export type TLoan = {
-  loanUid: string;
+  uid: string;
   title: string;
   features: string[];
-  isDeleted: boolean;
+  isActive: boolean;
 };
+
+export interface LoanModel extends Model<TLoan> {
+  findLastOne(): Promise<TLoan>;
+}

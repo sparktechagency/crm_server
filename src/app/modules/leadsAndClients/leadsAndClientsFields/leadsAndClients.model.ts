@@ -1,5 +1,5 @@
 import mongoose, { InferSchemaType, Schema } from 'mongoose';
-import { TFieldInterface } from '../../../../shared/validation/commonZodValidation';
+import { TFieldInterface } from '../../../interface';
 
 const LeadsFieldsSchema = new Schema<TFieldInterface>(
   {

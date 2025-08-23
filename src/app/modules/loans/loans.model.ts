@@ -1,9 +1,9 @@
 import { model, Schema } from 'mongoose';
-import { TLoan } from './loans.interface';
+import { LoanModel, TLoan } from './loans.interface';
 
-const loanSchema = new Schema<TLoan>(
+const loanSchema = new Schema<TLoan, LoanModel>(
   {
-    loanUid: {
+    uid: {
       type: String,
       required: [true, 'Loan UID is required'],
       unique: true,
@@ -16,9 +16,9 @@ const loanSchema = new Schema<TLoan>(
       type: [String],
       required: [true, 'Features are required'],
     },
-    isDeleted: {
+    isActive: {
       type: Boolean,
-      default: false,
+      default: true,
     },
   },
   {
@@ -26,6 +26,14 @@ const loanSchema = new Schema<TLoan>(
   },
 );
 
-const Loan = model<TLoan>('Loan', loanSchema);
+loanSchema.statics.findLastOne = async function () {
+  return await this.findOne({})
+    .select('uid')
+    .sort({ createdAt: -1 })
+    .limit(1)
+    .lean();
+};
+
+const Loan = model<TLoan, LoanModel>('Loan', loanSchema);
 
 export default Loan;

@@ -120,12 +120,15 @@ const getUsersBaseOnRole = async (
 const updateUsers = async (id: string, payload: Record<string, unknown>) => {
   const { email, phoneNumber, ...rest } = payload;
 
+  const updateQuery: Record<string, any> = {};
+  for (const key in rest) {
+    updateQuery[`customFields.${key}`] = rest[key];
+  }
+
   const userData = {
     email,
     phoneNumber,
-    customFields: {
-      ...rest,
-    },
+    ...updateQuery,
   };
 
   const result = await User.findByIdAndUpdate(id, userData, { new: true });
@@ -146,7 +149,11 @@ const assignSpoke = async (payload: {
 
   const result = await User.findOneAndUpdate(
     { _id: payload.fieldOfficerId },
-    { spokeUid: payload.spokeUid, spokeId: spokeManager._id },
+    {
+      spokeUid: payload.spokeUid,
+      spokeId: spokeManager._id,
+      isAssignSpoke: true,
+    },
     { new: true },
   );
   return result;

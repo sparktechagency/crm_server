@@ -1,12 +1,24 @@
-import { ObjectId } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 
 type TApplicationStatus = 'pending' | 'approved' | 'rejected';
 
 export type TLoanApplication = {
+  // common
   clientId: ObjectId;
   hubId: ObjectId;
   spokeId: ObjectId;
-  loanApplicationUid: string;
+  fieldOfficerId: ObjectId;
+  uid: string;
+  leadUid: string;
+
+  // lead info
+  email: string;
+  phoneNumber: string;
+  homeAddress: string;
+  name: string;
+  image: string;
+
+  // loan info
   applicantStatus: 'New' | 'From Leads';
   typeofFinancingRequested: string;
   purposeOfFinancing: string;
@@ -20,8 +32,11 @@ export type TLoanApplication = {
   nid: string;
   startDate: Date;
   endDate: Date;
-  leadUid: string;
   loanStatus: TApplicationStatus;
   supervisorApproval: TApplicationStatus;
   hubManagerApproval: TApplicationStatus;
 };
+
+export interface LoanApplicationModel extends Model<TLoanApplication> {
+  findLastOne(): Promise<TLoanApplication>;
+}

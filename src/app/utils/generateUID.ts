@@ -12,6 +12,7 @@ async function generateUID(model: Model<any>, key: string) {
 
     if (latestDoc && latestDoc.uid) {
       const lastNumber = parseInt(latestDoc.uid.split('-')[2]);
+
       const newNumber = (lastNumber + 1).toString().padStart(5, '0');
       newIdNumber = newNumber;
     } else {

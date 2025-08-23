@@ -1,14 +1,24 @@
-import { ObjectId } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 
 export type LeadsAndClients = {
-  leadClientUid: string;
+  uid: string;
   hubId: ObjectId;
   spokeId: ObjectId;
-  name: string;
+  fieldOfficerId: ObjectId;
   email: string;
   phoneNumber: string;
-  image: string;
-  address: string;
   isClient: boolean;
   isDeleted: boolean;
+  customFields: Map<string, unknown>;
 };
+
+export interface IReturnTypeLeadsAndClients extends LeadsAndClients {
+  _id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  __v: number;
+}
+
+export interface ILeadsAndClients extends Model<LeadsAndClients> {
+  findLastOne(): Promise<LeadsAndClients>;
+}

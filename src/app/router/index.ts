@@ -1,10 +1,14 @@
 import { Router } from 'express';
+import { AuthRoutes } from '../modules/auth/auth.routes';
+import { HubManagerRoutes } from '../modules/hubManager/hubManager.routes';
+import { LeadsAndClientsRoutes } from '../modules/leadsAndClients/leadsAndClients.routes';
+import { LeadsAndClientsFieldRoutes } from '../modules/leadsAndClients/leadsAndClientsFields/LeadsAndClientsField.routes';
+import { LoanApplicationRoutes } from '../modules/loanApplication/loanApplication.routes';
+import { LoansRoutes } from '../modules/loans/loans.routes';
 import { NotificationRoutes } from '../modules/notification/notification.routes';
 import { StaticContentRoutes } from '../modules/staticContent/staticContent.routes';
 import { UserRoutes } from '../modules/user/user.routes';
-import { AuthRoutes } from '../modules/auth/auth.routes';
 import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
-import { HubManagerRoutes } from '../modules/hubManager/hubManager.routes';
 const router = Router();
 
 type TRoutes = {
@@ -22,10 +26,6 @@ const routes: TRoutes[] = [
     route: UserRoutes,
   },
   {
-    path: '/users_field',
-    route: UserFieldRoutes,
-  },
-  {
     path: '/hub_manager',
     route: HubManagerRoutes,
   },
@@ -36,6 +36,28 @@ const routes: TRoutes[] = [
   {
     path: '/static_content',
     route: StaticContentRoutes,
+  },
+  {
+    path: '/loans',
+    route: LoansRoutes,
+  },
+  {
+    path: '/leads_and_clients',
+    route: LeadsAndClientsRoutes,
+  },
+  {
+    path: '/loan_application',
+    route: LoanApplicationRoutes,
+  },
+
+  // fields related routes
+  {
+    path: '/users_field',
+    route: UserFieldRoutes,
+  },
+  {
+    path: '/leads_and_clients_field',
+    route: LeadsAndClientsFieldRoutes,
   },
 ];
 
