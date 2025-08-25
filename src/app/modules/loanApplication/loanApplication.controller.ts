@@ -18,7 +18,10 @@ const createLoanApplication = catchAsync(async (req, res) => {
 });
 
 const getAllLoanApplication = catchAsync(async (req, res) => {
-  const result = await LoanApplicationService.getAllLoanApplication(req.user as TAuthUser, req.query);
+  const result = await LoanApplicationService.getAllLoanApplication(
+    req.user as TAuthUser,
+    req.query,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -28,6 +31,6 @@ const getAllLoanApplication = catchAsync(async (req, res) => {
 });
 
 export const LoanApplicationController = {
-    createLoanApplication,
-    getAllLoanApplication
+  createLoanApplication,
+  getAllLoanApplication,
 };

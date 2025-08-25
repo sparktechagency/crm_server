@@ -5,19 +5,22 @@ import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
 import { minuteToSecond } from '../../utils/minitToSecond';
 import { TMeta } from '../../utils/sendResponse';
-import { IReturnTypeLeadsAndClients, LeadsAndClients } from './leadsAndClients.interface';
+import {
+  IReturnTypeLeadsAndClients,
+  LeadsAndClients,
+} from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
-  session?: mongoose.ClientSession
+  session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
   const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
-    uid: await generateUID(LeadsAndClientsModel, "ID"),
+    uid: await generateUID(LeadsAndClientsModel, 'ID'),
     email,
     phoneNumber,
     hubId: user.hubId,
@@ -31,7 +34,9 @@ const createLeadsAndClients = async (
   let result: LeadsAndClients;
 
   if (session) {
-    const docs = await LeadsAndClientsModel.create([leadClientData], { session });
+    const docs = await LeadsAndClientsModel.create([leadClientData], {
+      session,
+    });
     result = docs[0] as LeadsAndClients;
   } else {
     const doc = await LeadsAndClientsModel.create(leadClientData);
@@ -42,7 +47,6 @@ const createLeadsAndClients = async (
 
   return result;
 };
-
 
 const getAllLeadsAndClients = async (
   user: TAuthUser,
@@ -136,14 +140,16 @@ const deleteLeadsAndClient = async (
   return result;
 };
 
-const getLeadsUsingUId = (uid: string): Promise<IReturnTypeLeadsAndClients | null> => {
+const getLeadsUsingUId = (
+  uid: string,
+): Promise<IReturnTypeLeadsAndClients | null> => {
   return LeadsAndClientsModel.findOne({ uid });
-}
+};
 
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
   updateLeadsOrClients,
   deleteLeadsAndClient,
-  getLeadsUsingUId
+  getLeadsUsingUId,
 };

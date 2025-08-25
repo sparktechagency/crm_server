@@ -1,11 +1,24 @@
 import { model, Schema } from 'mongoose';
-import { TLocationProfile } from './locationProfile.interface';
+import {
+  LocationProfileModal,
+  TLocationProfile,
+} from './locationProfile.interface';
 
-const locationProfileSchema = new Schema<TLocationProfile>(
+const locationProfileSchema = new Schema<
+  TLocationProfile,
+  LocationProfileModal
+>(
   {
     hubId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      required: [true, 'Hub id is required'],
+      unique: true,
+    },
+    uid: {
+      type: String,
+      required: [true, 'UID is required'],
+      unique: true,
     },
     locationName: {
       type: String,
@@ -41,7 +54,15 @@ const locationProfileSchema = new Schema<TLocationProfile>(
   },
 );
 
-const LocationProfile = model<TLocationProfile>(
+locationProfileSchema.statics.findLastOne = async function () {
+  return await this.findOne({}, null, { bypassMiddleware: true })
+    .select('uid')
+    .sort({ createdAt: -1 })
+    .limit(1)
+    .lean();
+};
+
+const LocationProfile = model<TLocationProfile, LocationProfileModal>(
   'LocationProfile',
   locationProfileSchema,
 );
