@@ -5,6 +5,10 @@ import { LoanApplicationService } from './loanApplication.service';
 import { TAuthUser } from '../../interface/authUser';
 
 const createLoanApplication = catchAsync(async (req, res) => {
+  if (req.file) {
+    req.body.image = req.file.path;
+  }
+
   const result = await LoanApplicationService.createLoanApplication(
     req.user as TAuthUser,
     req.body,
@@ -18,7 +22,10 @@ const createLoanApplication = catchAsync(async (req, res) => {
 });
 
 const getAllLoanApplication = catchAsync(async (req, res) => {
-  const result = await LoanApplicationService.getAllLoanApplication(req.user as TAuthUser, req.query);
+  const result = await LoanApplicationService.getAllLoanApplication(
+    req.user as TAuthUser,
+    req.query,
+  );
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -27,7 +34,25 @@ const getAllLoanApplication = catchAsync(async (req, res) => {
   });
 });
 
+const updateLoanApplication = catchAsync(async (req, res) => {
+  if (req.file) {
+    req.body.image = req.file.path;
+  }
+  const result = await LoanApplicationService.updateLoanApplication(
+    req.params.id,
+    req.body,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Loan application updated successfully',
+    data: result,
+  });
+});
+
 export const LoanApplicationController = {
-    createLoanApplication,
-    getAllLoanApplication
+  createLoanApplication,
+  getAllLoanApplication,
+  updateLoanApplication,
 };

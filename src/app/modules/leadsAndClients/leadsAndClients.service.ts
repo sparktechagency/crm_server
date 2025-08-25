@@ -5,19 +5,24 @@ import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
 import { minuteToSecond } from '../../utils/minitToSecond';
 import { TMeta } from '../../utils/sendResponse';
-import { IReturnTypeLeadsAndClients, LeadsAndClients } from './leadsAndClients.interface';
+import {
+  IReturnTypeLeadsAndClients,
+  LeadsAndClients,
+} from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
+import LoanApplication from '../loanApplication/loanApplication.model';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
-  session?: mongoose.ClientSession
+  session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
   const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
-    uid: await generateUID(LeadsAndClientsModel, "ID"),
+    uid: await generateUID(LeadsAndClientsModel, 'ID'),
     email,
     phoneNumber,
     hubId: user.hubId,
@@ -31,7 +36,9 @@ const createLeadsAndClients = async (
   let result: LeadsAndClients;
 
   if (session) {
-    const docs = await LeadsAndClientsModel.create([leadClientData], { session });
+    const docs = await LeadsAndClientsModel.create([leadClientData], {
+      session,
+    });
     result = docs[0] as LeadsAndClients;
   } else {
     const doc = await LeadsAndClientsModel.create(leadClientData);
@@ -43,12 +50,12 @@ const createLeadsAndClients = async (
   return result;
 };
 
-
 const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
   const cacheKey = `leadsAndClients::${user._id}`;
+
   // Try to fetch from Redis cache first
   const cached = await getCachedData<{
     meta: TMeta;
@@ -136,14 +143,60 @@ const deleteLeadsAndClient = async (
   return result;
 };
 
-const getLeadsUsingUId = (uid: string): Promise<IReturnTypeLeadsAndClients | null> => {
+const getLeadsUsingUId = (
+  uid: string,
+): Promise<IReturnTypeLeadsAndClients | null> => {
   return LeadsAndClientsModel.findOne({ uid });
-}
+};
+
+const getAllClients = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const clientQuery = new AggregationQueryBuilder(query);
+
+  const [result, meta] = await Promise.all([
+    clientQuery
+      .customPipeline([
+        {
+          $match: {
+            hubId: new mongoose.Types.ObjectId(String(user.hubId)),
+            spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          },
+        },
+        {
+          $lookup: {
+            from: 'leadsandclients',
+            localField: 'clientId',
+            foreignField: '_id',
+            as: 'client',
+          },
+        },
+        {
+          $unwind: '$client',
+        },
+      ])
+      .search([
+        'client.customFields.name',
+        'client.email',
+        'client.phoneNumber',
+      ])
+      .sort()
+      .paginate()
+      .execute(LoanApplication),
+
+    clientQuery.countTotal(LoanApplication),
+  ]);
+
+  return { meta, result };
+};
 
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
   updateLeadsOrClients,
   deleteLeadsAndClient,
-  getLeadsUsingUId
+  getLeadsUsingUId,
+  getAllClients,
 };

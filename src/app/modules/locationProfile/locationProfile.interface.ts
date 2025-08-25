@@ -1,7 +1,9 @@
-import { ObjectId } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 
 export type TLocationProfile = {
   hubId: ObjectId;
+  uid: string;
+  hubUid: string;
   locationName: string;
   locationId: string;
   email: string;
@@ -10,3 +12,7 @@ export type TLocationProfile = {
   currency: string;
   excelFormula: string;
 };
+
+export interface LocationProfileModal extends Model<TLocationProfile> {
+  findLastOne(): Promise<TLocationProfile>;
+}

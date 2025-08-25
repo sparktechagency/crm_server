@@ -11,13 +11,27 @@ const upload = fileUpload('./public/uploads/images/');
 
 const router = Router();
 
-router.post(
+router
+  .post(
     '/create',
     auth(USER_ROLE.fieldOfficer),
     upload.single('image'),
     parseFormData,
     validateRequest(LoanApplicationValidation.createLoanApplicationSchema),
-    LoanApplicationController.createLoanApplication
-).get("/all_loan_application", auth(USER_ROLE.fieldOfficer), LoanApplicationController.getAllLoanApplication)
+    LoanApplicationController.createLoanApplication,
+  )
+  .get(
+    '/all_loan_application',
+    auth(USER_ROLE.fieldOfficer),
+    LoanApplicationController.getAllLoanApplication,
+  )
+  .patch(
+    '/update/:id',
+    auth(USER_ROLE.fieldOfficer),
+    upload.single('image'),
+    parseFormData,
+    validateRequest(LoanApplicationValidation.updateLoanApplicationSchema),
+    LoanApplicationController.updateLoanApplication,
+  );
 
 export const LoanApplicationRoutes = router;
