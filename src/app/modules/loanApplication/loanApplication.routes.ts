@@ -24,6 +24,14 @@ router
     '/all_loan_application',
     auth(USER_ROLE.fieldOfficer),
     LoanApplicationController.getAllLoanApplication,
+  )
+  .patch(
+    '/update/:id',
+    auth(USER_ROLE.fieldOfficer),
+    upload.single('image'),
+    parseFormData,
+    validateRequest(LoanApplicationValidation.updateLoanApplicationSchema),
+    LoanApplicationController.updateLoanApplication,
   );
 
 export const LoanApplicationRoutes = router;

@@ -27,16 +27,15 @@ const createLoanApplication = async (
       image: payload.image,
     };
 
-    const findHubForFormula = await LocationProfile.findOne({
+    const findHubForFormula = (await LocationProfile.findOne({
       hubId: user.hubId,
-    }) as TLocationProfile;
+    })) as TLocationProfile;
 
     const installmentAmount = await installmentAmountCalculator(
       findHubForFormula?.excelFormula,
       payload.loanAmountRequested as number,
       payload.term as string,
     );
-
 
     let createLead: IReturnTypeLeadsAndClients;
 
@@ -103,7 +102,36 @@ const getAllLoanApplication = async (
   return { meta, result };
 };
 
+const updateLoanApplication = async (
+  id: string,
+  payload: Partial<TLoanApplication>,
+  user: TAuthUser,
+) => {
+  let installmentAmount: number = 0;
+  if (payload.loanAmountRequested) {
+    const findHubForFormula = (await LocationProfile.findOne({
+      hubId: user.hubId,
+    })) as TLocationProfile;
+
+    installmentAmount = await installmentAmountCalculator(
+      findHubForFormula?.excelFormula,
+      payload.loanAmountRequested as number,
+      payload.term as string,
+    );
+  }
+
+  const result = await LoanApplication.findOneAndUpdate(
+    { _id: id },
+    { ...payload, installMentAmount: installmentAmount },
+    {
+      new: true,
+    },
+  );
+  return result;
+};
+
 export const LoanApplicationService = {
   createLoanApplication,
   getAllLoanApplication,
+  updateLoanApplication,
 };
