@@ -25,9 +25,7 @@ const createLoanApplicationSchema = z.object({
     loanAmountRequested: z
       .number()
       .positive({ message: 'Loan amount must be greater than 0' }),
-    installMentAmount: z
-      .number()
-      .positive({ message: 'Installment amount must be greater than 0' }),
+
     employmentStatus: z
       .string()
       .min(1, { message: 'Employment status is required' }),
@@ -87,10 +85,7 @@ const updateLoanApplicationSchema = z.object({
       .number()
       .positive({ message: 'Loan amount must be greater than 0' })
       .optional(),
-    installMentAmount: z
-      .number()
-      .positive({ message: 'Installment amount must be greater than 0' })
-      .optional(),
+
     employmentStatus: z
       .string()
       .min(1, { message: 'Employment status is required' })

@@ -7,6 +7,8 @@ import { TLoanApplication } from './loanApplication.interface';
 import LoanApplication from './loanApplication.model';
 
 import mongoose from 'mongoose';
+import { TLocationProfile } from '../locationProfile/locationProfile.interface';
+import LocationProfile from '../locationProfile/locationProfile.model';
 import { installmentAmountCalculator } from './loanApplication.utils';
 
 const createLoanApplication = async (
@@ -25,13 +27,17 @@ const createLoanApplication = async (
       image: payload.image,
     };
 
+    const findHubForFormula = await LocationProfile.findOne({
+      hubId: user.hubId,
+    }) as TLocationProfile;
+
     const installmentAmount = await installmentAmountCalculator(
+      findHubForFormula?.excelFormula,
       payload.loanAmountRequested as number,
       payload.term as string,
     );
 
-    console.log(installmentAmount, 'installmentAmount');
-    return;
+
     let createLead: IReturnTypeLeadsAndClients;
 
     if (payload.applicantStatus === 'New') {
@@ -53,6 +59,7 @@ const createLoanApplication = async (
       spokeId: user.spokeId,
       fieldOfficerId: user._id,
       leadUid: createLead.uid,
+      installMentAmount: installmentAmount,
       ...payload,
     };
 
