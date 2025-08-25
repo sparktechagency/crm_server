@@ -10,6 +10,8 @@ import {
   LeadsAndClients,
 } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
+import LoanApplication from '../loanApplication/loanApplication.model';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
@@ -53,6 +55,7 @@ const getAllLeadsAndClients = async (
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
   const cacheKey = `leadsAndClients::${user._id}`;
+
   // Try to fetch from Redis cache first
   const cached = await getCachedData<{
     meta: TMeta;
@@ -146,10 +149,54 @@ const getLeadsUsingUId = (
   return LeadsAndClientsModel.findOne({ uid });
 };
 
+const getAllClients = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const clientQuery = new AggregationQueryBuilder(query);
+
+  const [result, meta] = await Promise.all([
+    clientQuery
+      .customPipeline([
+        {
+          $match: {
+            hubId: new mongoose.Types.ObjectId(String(user.hubId)),
+            spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          },
+        },
+        {
+          $lookup: {
+            from: 'leadsandclients',
+            localField: 'clientId',
+            foreignField: '_id',
+            as: 'client',
+          },
+        },
+        {
+          $unwind: '$client',
+        },
+      ])
+      .search([
+        'client.customFields.name',
+        'client.email',
+        'client.phoneNumber',
+      ])
+      .sort()
+      .paginate()
+      .execute(LoanApplication),
+
+    clientQuery.countTotal(LoanApplication),
+  ]);
+
+  return { meta, result };
+};
+
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
   updateLeadsOrClients,
   deleteLeadsAndClient,
   getLeadsUsingUId,
+  getAllClients,
 };

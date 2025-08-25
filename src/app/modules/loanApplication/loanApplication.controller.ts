@@ -5,6 +5,10 @@ import { LoanApplicationService } from './loanApplication.service';
 import { TAuthUser } from '../../interface/authUser';
 
 const createLoanApplication = catchAsync(async (req, res) => {
+  if (req.file) {
+    req.body.image = req.file.path;
+  }
+
   const result = await LoanApplicationService.createLoanApplication(
     req.user as TAuthUser,
     req.body,
@@ -31,6 +35,9 @@ const getAllLoanApplication = catchAsync(async (req, res) => {
 });
 
 const updateLoanApplication = catchAsync(async (req, res) => {
+  if (req.file) {
+    req.body.image = req.file.path;
+  }
   const result = await LoanApplicationService.updateLoanApplication(
     req.params.id,
     req.body,

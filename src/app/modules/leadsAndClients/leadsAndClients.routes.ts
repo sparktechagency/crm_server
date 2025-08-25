@@ -22,6 +22,11 @@ router
     auth(USER_ROLE.fieldOfficer),
     LeadsAndClientsController.getLeadsAndClients,
   )
+  .get(
+    '/all_clients',
+    auth(USER_ROLE.fieldOfficer),
+    LeadsAndClientsController.getAllClients,
+  )
   .patch(
     '/update/:id',
     auth(USER_ROLE.fieldOfficer),
