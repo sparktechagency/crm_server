@@ -19,12 +19,12 @@ router
   )
   .get(
     '/',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
     LeadsAndClientsController.getLeadsAndClients,
   )
   .get(
     '/all_clients',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
     LeadsAndClientsController.getAllClients,
   )
   .patch(
@@ -36,12 +36,12 @@ router
   )
   .delete(
     '/delete/:id',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
     LeadsAndClientsController.deleteLeadsOrClients,
   )
   .delete(
     '/delete_client/:id',
-    auth(USER_ROLE.hubManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.admin),
     LeadsAndClientsController.deleteClient,
   );
 

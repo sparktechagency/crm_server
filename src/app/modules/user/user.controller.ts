@@ -66,9 +66,44 @@ const assignSpoke = catchAsync(async (req, res) => {
   });
 });
 
+const updateUsers = catchAsync(async (req, res) => {
+  const fields = ['image', 'cv'];
+
+  const files = req.files as { [fieldname: string]: MulterFile[] };
+
+  for (const field of fields) {
+    if (files[field]) {
+      req.body[field] = files[field][0].path;
+    }
+  }
+
+  const result = await UserService.updateUsers(req.params.id, req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User updated successfully',
+    data: result,
+  });
+});
+
+const deleteUsers = catchAsync(async (req, res) => {
+  const result = await UserService.deleteUsers(
+    req.params.id,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User deleted successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateUserActions,
   createFieldOfficer,
   getUsersBaseOnRole,
   assignSpoke,
+  updateUsers,
+  deleteUsers,
 };

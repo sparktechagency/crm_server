@@ -67,7 +67,7 @@ const getAllLeadsAndClients = async (
   }>(cacheKey);
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    // return cached;
+    return cached;
   }
 
   let matchStage = {};
@@ -78,6 +78,10 @@ const getAllLeadsAndClients = async (
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
       hubId: user._id,
+      isClient: false,
+    };
+  } else if (user.role === USER_ROLE.admin) {
+    matchStage = {
       isClient: false,
     };
   }
@@ -194,6 +198,8 @@ const getAllClients = async (
     matchStage = {
       hubId: new mongoose.Types.ObjectId(String(user._id)),
     };
+  } else if (user.role === USER_ROLE.admin) {
+    matchStage = {};
   }
 
   const [result, meta] = await Promise.all([

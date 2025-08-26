@@ -1,3 +1,4 @@
+import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import User from '../user/user.model';
@@ -9,10 +10,20 @@ const allFieldOfficerRequest = async (
   const { isAssignSpoke } = query;
 
   const spokeStatus = isAssignSpoke === 'true' ? true : false;
+
+  let matchStage = {};
+  if (user.role === USER_ROLE.admin) {
+    matchStage = {};
+  } else if (user.role === USER_ROLE.hubManager) {
+    matchStage = {
+      hubId: user._id,
+    };
+  }
+
   const fieldOfficerQuery = new QueryBuilder(
     User.find({
       role: 'fieldOfficer',
-      hubId: user._id,
+      ...matchStage,
       isAssignSpoke: spokeStatus,
     }),
     query,

@@ -22,7 +22,12 @@ router
   )
   .get(
     '/all_loan_application',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.supervisor, USER_ROLE.hubManager),
+    auth(
+      USER_ROLE.fieldOfficer,
+      USER_ROLE.supervisor,
+      USER_ROLE.hubManager,
+      USER_ROLE.admin,
+    ),
     LoanApplicationController.getAllLoanApplication,
   )
   .patch(
@@ -41,7 +46,7 @@ router
   )
   .delete(
     '/delete/:id',
-    auth(USER_ROLE.hubManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.supervisor, USER_ROLE.admin),
     LoanApplicationController.deleteLoanApplication,
   );
 

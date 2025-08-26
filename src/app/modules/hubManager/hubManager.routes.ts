@@ -7,7 +7,7 @@ const router = Router();
 
 router.get(
   '/field_officer_request',
-  auth(USER_ROLE.hubManager),
+  auth(USER_ROLE.hubManager, USER_ROLE.admin),
   HubManagerController.allFieldOfficerRequest,
 );
 

@@ -109,7 +109,10 @@ const getAllLoanApplication = async (
         ? { hubManagerApproval: query.hubManagerApproval }
         : {}),
     };
-  } else if (user.role === USER_ROLE.supervisor) {
+  } else if (
+    user.role === USER_ROLE.supervisor ||
+    user.role === USER_ROLE.admin
+  ) {
     matchStage = {};
   }
 

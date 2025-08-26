@@ -37,9 +37,24 @@ router
     UserController.assignSpoke,
   )
   .patch(
+    '/update_users/:id',
+    auth(USER_ROLE.hubManager),
+    upload.fields([
+      { name: 'image', maxCount: 1 },
+      { name: 'cv', maxCount: 1 },
+    ]),
+    parseFormData,
+    UserController.updateUsers,
+  )
+  .patch(
     '/actions/:id',
     auth(USER_ROLE.admin),
     UserController.updateUserActions,
+  )
+  .delete(
+    '/delete_users/:id',
+    auth(USER_ROLE.hubManager, USER_ROLE.admin),
+    UserController.deleteUsers,
   );
 
 export const UserRoutes = router;
