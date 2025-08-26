@@ -117,7 +117,17 @@ const updateLoanApplicationSchema = z.object({
   }),
 });
 
+const loanApplicationActionSchema = z.object({
+  body: z.object({
+    loanId: z.string().min(1, { message: 'Loan ID is required' }),
+    action: z.enum(['approved', 'rejected'], {
+      message: "Action must be 'approved' or 'rejected'",
+    }),
+  }),
+});
+
 export const LoanApplicationValidation = {
   createLoanApplicationSchema,
   updateLoanApplicationSchema,
+  loanApplicationActionSchema
 };

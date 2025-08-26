@@ -21,6 +21,7 @@ const createUsers = async (payload: Record<string, unknown>) => {
   const uid = hubUid ? hubUid : spokeUid;
   const data = await findUserWithUid(uid as string);
 
+  console.log(generatePassword);
   const userData = {
     uid: await generateUID(User, uidKey),
     password: generatePassword,

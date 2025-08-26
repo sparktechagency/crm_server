@@ -8,7 +8,10 @@ export const uidForUserRole = (role: string) => {
     return 'HM';
   } else if (role === USER_ROLE.spokeManager) {
     return 'SM';
-  } else {
+  } else if (role === USER_ROLE.supervisor) {
+    return 'SU';
+  }
+  else {
     return 'HR';
   }
 };

@@ -22,7 +22,7 @@ router
   )
   .get(
     '/all_loan_application',
-    auth(USER_ROLE.fieldOfficer),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.supervisor, USER_ROLE.hubManager),
     LoanApplicationController.getAllLoanApplication,
   )
   .patch(
@@ -32,6 +32,12 @@ router
     parseFormData,
     validateRequest(LoanApplicationValidation.updateLoanApplicationSchema),
     LoanApplicationController.updateLoanApplication,
-  );
+)
+  .patch(
+    "/action",
+    auth(USER_ROLE.supervisor, USER_ROLE.hubManager),
+    validateRequest(LoanApplicationValidation.loanApplicationActionSchema),
+    LoanApplicationController.loanApplicationAction
+  )
 
 export const LoanApplicationRoutes = router;

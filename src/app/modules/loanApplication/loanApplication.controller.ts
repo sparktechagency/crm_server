@@ -51,8 +51,24 @@ const updateLoanApplication = catchAsync(async (req, res) => {
   });
 });
 
+const loanApplicationAction = catchAsync(async (req, res) => {
+  const result = await LoanApplicationService.loanApplicationAction(
+    req.body,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `Loan application ${req.body.action} successfully`,
+    data: result,
+  });
+});
+
+
+
 export const LoanApplicationController = {
   createLoanApplication,
   getAllLoanApplication,
   updateLoanApplication,
+  loanApplicationAction
 };

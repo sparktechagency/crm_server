@@ -18,3 +18,9 @@ export const GENDER = {
   female: 'female',
   others: 'others',
 } as const;
+
+export const LOAN_APPLICATION_STATUS = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
