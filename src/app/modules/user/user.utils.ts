@@ -10,8 +10,7 @@ export const uidForUserRole = (role: string) => {
     return 'SM';
   } else if (role === USER_ROLE.supervisor) {
     return 'SU';
-  }
-  else {
+  } else {
     return 'HR';
   }
 };

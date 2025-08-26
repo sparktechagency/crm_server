@@ -64,11 +64,23 @@ const loanApplicationAction = catchAsync(async (req, res) => {
   });
 });
 
-
+const deleteLoanApplication = catchAsync(async (req, res) => {
+  const result = await LoanApplicationService.deleteLoanApplication(
+    req.params.id,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Loan application deleted successfully',
+    data: result,
+  });
+});
 
 export const LoanApplicationController = {
   createLoanApplication,
   getAllLoanApplication,
   updateLoanApplication,
-  loanApplicationAction
+  loanApplicationAction,
+  deleteLoanApplication,
 };

@@ -129,5 +129,5 @@ const loanApplicationActionSchema = z.object({
 export const LoanApplicationValidation = {
   createLoanApplicationSchema,
   updateLoanApplicationSchema,
-  loanApplicationActionSchema
+  loanApplicationActionSchema,
 };

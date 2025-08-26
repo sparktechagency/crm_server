@@ -19,7 +19,7 @@ router
   )
   .get(
     '/',
-    auth(USER_ROLE.fieldOfficer),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
     LeadsAndClientsController.getLeadsAndClients,
   )
   .get(
@@ -36,7 +36,7 @@ router
   )
   .delete(
     '/delete/:id',
-    auth(USER_ROLE.fieldOfficer),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
     LeadsAndClientsController.deleteLeadsOrClients,
   );
 

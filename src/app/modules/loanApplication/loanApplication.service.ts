@@ -3,7 +3,10 @@ import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
 import { IReturnTypeLeadsAndClients } from '../leadsAndClients/leadsAndClients.interface';
 import { LeadsAndClientsService } from '../leadsAndClients/leadsAndClients.service';
-import { TApplicationStatus, TLoanApplication } from './loanApplication.interface';
+import {
+  TApplicationStatus,
+  TLoanApplication,
+} from './loanApplication.interface';
 import LoanApplication from './loanApplication.model';
 
 import mongoose from 'mongoose';
@@ -88,28 +91,36 @@ const getAllLoanApplication = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-
-  let matchStage = {}
+  let matchStage = {};
 
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
       hubId: user.hubId,
       spokeId: user.spokeId,
       fieldOfficerId: user._id,
-    }
+    };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
       hubId: user._id,
-      supervisorApproval: LOAN_APPLICATION_STATUS.approved
-    }
+      ...(query.supervisorApproval
+        ? { supervisorApproval: query.supervisorApproval }
+        : { supervisorApproval: LOAN_APPLICATION_STATUS.approved }),
+      ...(query.hubManagerApproval
+        ? { hubManagerApproval: query.hubManagerApproval }
+        : {}),
+    };
   } else if (user.role === USER_ROLE.supervisor) {
-    matchStage = {}
+    matchStage = {};
   }
 
   const loanApplicationQuery = new QueryBuilder(
-    LoanApplication.find({ ...matchStage }),
+    LoanApplication.find({ ...matchStage }).populate('clientId'),
     query,
-  );
+  )
+    .search(['name', 'email', 'phoneNumber'])
+    .sort()
+    .paginate()
+    .filter(['supervisorApproval']);
 
   const [result, meta] = await Promise.all([
     loanApplicationQuery.queryModel,
@@ -147,23 +158,26 @@ const updateLoanApplication = async (
   return result;
 };
 
-const loanApplicationAction = async (payload: { loanId: string, action: TApplicationStatus }, user: TAuthUser) => {
-
+const loanApplicationAction = async (
+  payload: { loanId: string; action: TApplicationStatus },
+  user: TAuthUser,
+) => {
   const findLoan = await LoanApplication.findOne({ _id: payload.loanId });
 
   if (!findLoan) {
     throw new AppError(httpStatus.NOT_FOUND, 'Loan not found');
   }
 
-  let actionPayload = {}
+  let actionPayload = {};
   if (user.role === USER_ROLE.supervisor) {
     actionPayload = {
-      supervisorApproval: payload.action
-    }
+      supervisorApproval: payload.action,
+    };
   } else if (user.role === USER_ROLE.hubManager) {
     actionPayload = {
-      hubManagerApproval: payload.action
-    }
+      hubManagerApproval: payload.action,
+      loanStatus: payload.action,
+    };
   }
 
   const result = await LoanApplication.findOneAndUpdate(
@@ -175,11 +189,22 @@ const loanApplicationAction = async (payload: { loanId: string, action: TApplica
   );
 
   return result;
-}
+};
+
+const deleteLoanApplication = async (id: string, user: TAuthUser) => {
+  const result = await LoanApplication.findOneAndDelete({ _id: id });
+
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'Loan not found');
+  }
+
+  return result;
+};
 
 export const LoanApplicationService = {
   createLoanApplication,
   getAllLoanApplication,
   updateLoanApplication,
-  loanApplicationAction
+  loanApplicationAction,
+  deleteLoanApplication,
 };

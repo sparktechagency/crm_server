@@ -12,6 +12,7 @@ import {
 import LeadsAndClientsModel from './leadsAndClients.model';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import { USER_ROLE } from '../../constant';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
@@ -63,12 +64,24 @@ const getAllLeadsAndClients = async (
   }>(cacheKey);
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    return cached;
+    // return cached;
+  }
+
+  let matchStage = {};
+  if (user.role === USER_ROLE.fieldOfficer) {
+    matchStage = {
+      fieldOfficerId: user._id,
+    };
+  } else if (user.role === USER_ROLE.hubManager) {
+    matchStage = {
+      hubId: user._id,
+      isClient: false,
+    };
   }
 
   const leadsQuery = new QueryBuilder(
     LeadsAndClientsModel.find({
-      fieldOfficerId: user._id,
+      ...matchStage,
     }),
     query,
   )
@@ -132,9 +145,21 @@ const deleteLeadsAndClient = async (
 ): Promise<LeadsAndClients | null> => {
   const cacheKey = `leadsAndClients::${user._id}`;
 
+  let matchStage = {};
+
+  if (user.role === USER_ROLE.fieldOfficer) {
+    matchStage = {
+      fieldOfficerId: user._id,
+    };
+  } else if (user.role === USER_ROLE.hubManager) {
+    matchStage = {
+      hubId: user._id,
+    };
+  }
+
   const result = await LeadsAndClientsModel.findOneAndDelete({
     _id: id,
-    fieldOfficerId: user._id,
+    ...matchStage,
     isClient: false,
   });
 

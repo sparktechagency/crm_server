@@ -26,18 +26,23 @@ router
     LoanApplicationController.getAllLoanApplication,
   )
   .patch(
+    '/action',
+    auth(USER_ROLE.supervisor, USER_ROLE.hubManager),
+    validateRequest(LoanApplicationValidation.loanApplicationActionSchema),
+    LoanApplicationController.loanApplicationAction,
+  )
+  .patch(
     '/update/:id',
     auth(USER_ROLE.fieldOfficer),
     upload.single('image'),
     parseFormData,
     validateRequest(LoanApplicationValidation.updateLoanApplicationSchema),
     LoanApplicationController.updateLoanApplication,
-)
-  .patch(
-    "/action",
-    auth(USER_ROLE.supervisor, USER_ROLE.hubManager),
-    validateRequest(LoanApplicationValidation.loanApplicationActionSchema),
-    LoanApplicationController.loanApplicationAction
   )
+  .delete(
+    '/delete/:id',
+    auth(USER_ROLE.hubManager),
+    LoanApplicationController.deleteLoanApplication,
+  );
 
 export const LoanApplicationRoutes = router;
