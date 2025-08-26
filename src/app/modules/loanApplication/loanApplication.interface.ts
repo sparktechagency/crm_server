@@ -1,6 +1,6 @@
 import { Model, ObjectId } from 'mongoose';
 
-type TApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type TApplicationStatus = 'pending' | 'approved' | 'rejected';
 
 export type TLoanApplication = {
   // common

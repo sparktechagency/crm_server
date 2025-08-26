@@ -21,6 +21,7 @@ const createUsers = async (payload: Record<string, unknown>) => {
   const uid = hubUid ? hubUid : spokeUid;
   const data = await findUserWithUid(uid as string);
 
+  console.log(generatePassword);
   const userData = {
     uid: await generateUID(User, uidKey),
     password: generatePassword,
@@ -159,10 +160,19 @@ const assignSpoke = async (payload: {
   return result;
 };
 
+const deleteUsers = async (id: string, user: TAuthUser) => {
+  const result = await User.findByIdAndDelete(id);
+  if (!result) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+  return result;
+};
+
 export const UserService = {
   updateUserActions,
   createUsers,
   getUsersBaseOnRole,
   updateUsers,
   assignSpoke,
+  deleteUsers,
 };

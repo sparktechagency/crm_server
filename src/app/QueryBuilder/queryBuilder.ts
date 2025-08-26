@@ -27,7 +27,6 @@ class QueryBuilder<T> {
 
   filter(filterableQuery: string[]) {
     const queryObj = { ...this.query };
-
     const filteredQuery = Object.keys(queryObj)
       .filter((key) => filterableQuery.includes(key))
       .reduce(

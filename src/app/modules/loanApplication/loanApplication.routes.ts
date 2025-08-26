@@ -22,8 +22,19 @@ router
   )
   .get(
     '/all_loan_application',
-    auth(USER_ROLE.fieldOfficer),
+    auth(
+      USER_ROLE.fieldOfficer,
+      USER_ROLE.supervisor,
+      USER_ROLE.hubManager,
+      USER_ROLE.admin,
+    ),
     LoanApplicationController.getAllLoanApplication,
+  )
+  .patch(
+    '/action',
+    auth(USER_ROLE.supervisor, USER_ROLE.hubManager),
+    validateRequest(LoanApplicationValidation.loanApplicationActionSchema),
+    LoanApplicationController.loanApplicationAction,
   )
   .patch(
     '/update/:id',
@@ -32,6 +43,11 @@ router
     parseFormData,
     validateRequest(LoanApplicationValidation.updateLoanApplicationSchema),
     LoanApplicationController.updateLoanApplication,
+  )
+  .delete(
+    '/delete/:id',
+    auth(USER_ROLE.hubManager, USER_ROLE.supervisor, USER_ROLE.admin),
+    LoanApplicationController.deleteLoanApplication,
   );
 
 export const LoanApplicationRoutes = router;
