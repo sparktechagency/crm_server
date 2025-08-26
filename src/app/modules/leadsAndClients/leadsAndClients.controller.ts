@@ -78,10 +78,24 @@ const getAllClients = catchAsync(async (req, res) => {
   });
 });
 
+const deleteClient = catchAsync(async (req, res) => {
+  const result = await LeadsAndClientsService.deleteClient(
+    req.params.id,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Client deleted successfully',
+    data: result,
+  });
+});
+
 export const LeadsAndClientsController = {
   createLeadsAndClients,
   getLeadsAndClients,
   updateLeadsOrClients,
   deleteLeadsOrClients,
   getAllClients,
+  deleteClient,
 };

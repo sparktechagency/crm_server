@@ -13,6 +13,9 @@ import LeadsAndClientsModel from './leadsAndClients.model';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import { USER_ROLE } from '../../constant';
+import { transactionWrapper } from '../../utils/transactionWrapper';
+import httpStatus from 'http-status';
+import AppError from '../../utils/AppError';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
@@ -180,14 +183,25 @@ const getAllClients = async (
 ) => {
   const clientQuery = new AggregationQueryBuilder(query);
 
+  let matchStage = {};
+  if (user.role === USER_ROLE.fieldOfficer) {
+    matchStage = {
+      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
+      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+    };
+  } else if (user.role === USER_ROLE.hubManager) {
+    matchStage = {
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
+    };
+  }
+
   const [result, meta] = await Promise.all([
     clientQuery
       .customPipeline([
         {
           $match: {
-            hubId: new mongoose.Types.ObjectId(String(user.hubId)),
-            spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
-            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+            ...matchStage,
           },
         },
         {
@@ -217,6 +231,27 @@ const getAllClients = async (
   return { meta, result };
 };
 
+const deleteClient = async (
+  id: string,
+  user: TAuthUser,
+): Promise<LeadsAndClients | null> => {
+  const result = transactionWrapper(async (session) => {
+    const client = await LeadsAndClientsModel.findOneAndDelete(
+      { _id: id },
+      { session },
+    );
+    if (!client)
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Client not deleted try again',
+      );
+    await LoanApplication.deleteMany({ clientId: id }, { session });
+    return client;
+  });
+
+  return result;
+};
+
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
@@ -224,4 +259,5 @@ export const LeadsAndClientsService = {
   deleteLeadsAndClient,
   getLeadsUsingUId,
   getAllClients,
+  deleteClient,
 };

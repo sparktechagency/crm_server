@@ -24,7 +24,7 @@ router
   )
   .get(
     '/all_clients',
-    auth(USER_ROLE.fieldOfficer),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
     LeadsAndClientsController.getAllClients,
   )
   .patch(
@@ -38,6 +38,11 @@ router
     '/delete/:id',
     auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager),
     LeadsAndClientsController.deleteLeadsOrClients,
+  )
+  .delete(
+    '/delete_client/:id',
+    auth(USER_ROLE.hubManager),
+    LeadsAndClientsController.deleteClient,
   );
 
 export const LeadsAndClientsRoutes = router;
