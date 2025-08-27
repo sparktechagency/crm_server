@@ -85,7 +85,7 @@ const getUsersBaseOnRole = async (
   query: Record<string, unknown>,
 ) => {
   const { role } = query;
-  const cacheKey = `users::${user._id}`;
+  const cacheKey = `users::${user._id}-${role}`;
   // Try to fetch from Redis cache first
   const cached = await getCachedData<{ result: TUser[] }>(cacheKey);
   if (cached) {
@@ -100,6 +100,7 @@ const getUsersBaseOnRole = async (
       : user.role === USER_ROLE.spokeManager
         ? { spokeId: user._id }
         : {};
+
 
   const userQuery = new QueryBuilder(User.find({ ...matchStage, role }), query)
     .search(['customFields.name', 'email', 'phoneNumber'])
@@ -205,6 +206,17 @@ const getAllManagers = async (
   return { meta, result };
 };
 
+const getFieldOfficerRecord = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+
+
+  return user
+
+
+}
+
 export const UserService = {
   updateUserActions,
   createUsers,
@@ -213,4 +225,5 @@ export const UserService = {
   assignSpoke,
   deleteUsers,
   getAllManagers,
+  getFieldOfficerRecord
 };

@@ -112,6 +112,19 @@ const getAllManagers = catchAsync(async (req, res) => {
   });
 });
 
+const getFieldOfficerRecord = catchAsync(async (req, res) => {
+  const result = await UserService.getFieldOfficerRecord(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Field officer record fetched successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateUserActions,
   createFieldOfficer,
@@ -120,4 +133,5 @@ export const UserController = {
   updateUsers,
   deleteUsers,
   getAllManagers,
+  getFieldOfficerRecord
 };
