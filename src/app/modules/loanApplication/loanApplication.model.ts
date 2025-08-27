@@ -77,7 +77,7 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
     loanStatus: {
       type: String,
       required: [true, 'Loan status is required'],
-      enum: ['approved', 'rejected', 'pending'],
+      enum: ['approved', 'rejected', 'pending', 'closed'],
       default: 'pending',
     },
     supervisorApproval: {
@@ -90,6 +90,11 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
       type: String,
       required: [true, 'Preferred contact is required'],
     },
+    totalRepayment: {
+      type: Number,
+      required: [true, 'Total repayment is required'],
+    },
+    grossProfit: { type: Number, required: [true, 'Gross profit is required'] },
     term: { type: String, required: [true, 'Term is required'] },
     nid: { type: String, required: [true, 'NID is required'] },
   },

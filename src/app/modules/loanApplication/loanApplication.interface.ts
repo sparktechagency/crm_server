@@ -1,6 +1,6 @@
 import { Model, ObjectId } from 'mongoose';
 
-export type TApplicationStatus = 'pending' | 'approved' | 'rejected';
+export type TApplicationStatus = 'pending' | 'approved' | 'rejected' | 'closed';
 
 export type TLoanApplication = {
   // common
@@ -25,6 +25,8 @@ export type TLoanApplication = {
   loanAmountRequested: number;
   installMentAmount: number;
   employmentStatus: string;
+  totalRepayment: number;
+  grossProfit: number;
   whereAreYouLocated: string;
   monthlyIncome: number;
   preferredContact: string;

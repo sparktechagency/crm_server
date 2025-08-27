@@ -37,7 +37,7 @@ const createLoanApplication = async (
       hubId: user.hubId,
     })) as TLocationProfile;
 
-    const installmentAmount = await installmentAmountCalculator(
+    const amountCalculation = await installmentAmountCalculator(
       findHubForFormula?.excelFormula,
       payload.loanAmountRequested as number,
       payload.term as string,
@@ -64,7 +64,9 @@ const createLoanApplication = async (
       spokeId: user.spokeId,
       fieldOfficerId: user._id,
       leadUid: createLead.uid,
-      installMentAmount: installmentAmount,
+      installMentAmount: amountCalculation.installmentAmount,
+      grossProfit: amountCalculation.grossProfit,
+      totalRepayment: amountCalculation.totalRepayments,
       ...payload,
     };
 
@@ -138,13 +140,13 @@ const updateLoanApplication = async (
   payload: Partial<TLoanApplication>,
   user: TAuthUser,
 ) => {
-  let installmentAmount: number = 0;
+  let amountCalculation;
   if (payload.loanAmountRequested) {
     const findHubForFormula = (await LocationProfile.findOne({
       hubId: user.hubId,
     })) as TLocationProfile;
 
-    installmentAmount = await installmentAmountCalculator(
+    amountCalculation = await installmentAmountCalculator(
       findHubForFormula?.excelFormula,
       payload.loanAmountRequested as number,
       payload.term as string,
@@ -153,7 +155,12 @@ const updateLoanApplication = async (
 
   const result = await LoanApplication.findOneAndUpdate(
     { _id: id },
-    { ...payload, installMentAmount: installmentAmount },
+    {
+      ...payload,
+      installMentAmount: amountCalculation?.installmentAmount,
+      grossProfit: amountCalculation?.grossProfit,
+      totalRepayment: amountCalculation?.totalRepayments,
+    },
     {
       new: true,
     },
