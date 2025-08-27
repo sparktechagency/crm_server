@@ -30,6 +30,7 @@ router
     ),
     UserController.getUsersBaseOnRole,
   )
+  .get('/all_managers', auth(USER_ROLE.admin), UserController.getAllManagers)
   .patch(
     '/assign_spoke',
     auth(USER_ROLE.hubManager),
