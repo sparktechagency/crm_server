@@ -101,7 +101,6 @@ const getUsersBaseOnRole = async (
         ? { spokeId: user._id }
         : {};
 
-
   const userQuery = new QueryBuilder(User.find({ ...matchStage, role }), query)
     .search(['customFields.name', 'email', 'phoneNumber'])
     .sort()
@@ -210,12 +209,8 @@ const getFieldOfficerRecord = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-
-
-  return user
-
-
-}
+  return user;
+};
 
 export const UserService = {
   updateUserActions,
@@ -225,5 +220,5 @@ export const UserService = {
   assignSpoke,
   deleteUsers,
   getAllManagers,
-  getFieldOfficerRecord
+  getFieldOfficerRecord,
 };

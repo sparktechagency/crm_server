@@ -5,6 +5,8 @@
 // ): Promise<number> => {
 //   const months = Number(terms.split(' ')[0]);
 
+import { IRepaymentsDates } from './loanApplication.interface';
+
 //   const parseFormula = (formula: string) => {
 //     // Extract the values dynamically
 //     const multiplierMatch = formula.match(/\(([\d.]+) \* P/);
@@ -48,6 +50,7 @@ export const installmentAmountCalculator = async (
   installmentAmount: number;
   totalRepayments: number;
   grossProfit: number;
+  repaymentsDates: IRepaymentsDates[];
 }> => {
   const months = Number(terms.split(' ')[0]);
 
@@ -86,9 +89,26 @@ export const installmentAmountCalculator = async (
   const totalRepayments = Number(installmentAmount) * months; // Total repayments over all months
   const grossProfit = totalRepayments - requestAmount; // Gross profit
 
+  const repaymentsDates = [];
+
+  for (let i = 0; i < months; i++) {
+    const month = new Date();
+    month.setMonth(month.getMonth() + i);
+
+    const formattedDate = month.toISOString().split('T')[0];
+
+    const monthName = month.toLocaleString('default', { month: 'long' });
+
+    repaymentsDates.push({
+      month: monthName,
+      dueDate: formattedDate,
+    });
+  }
+
   return {
     installmentAmount: Number(installmentAmount),
     totalRepayments,
     grossProfit: Number(grossProfit.toFixed(2)),
+    repaymentsDates,
   };
 };

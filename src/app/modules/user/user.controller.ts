@@ -133,5 +133,5 @@ export const UserController = {
   updateUsers,
   deleteUsers,
   getAllManagers,
-  getFieldOfficerRecord
+  getFieldOfficerRecord,
 };

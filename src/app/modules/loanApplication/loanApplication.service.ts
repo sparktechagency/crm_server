@@ -67,6 +67,7 @@ const createLoanApplication = async (
       installMentAmount: amountCalculation.installmentAmount,
       grossProfit: amountCalculation.grossProfit,
       totalRepayment: amountCalculation.totalRepayments,
+      repaymentsDates: amountCalculation.repaymentsDates,
       ...payload,
     };
 

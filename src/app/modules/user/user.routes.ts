@@ -30,8 +30,16 @@ router
     ),
     UserController.getUsersBaseOnRole,
   )
-  .get('/all_managers', auth(USER_ROLE.admin, USER_ROLE.hr), UserController.getAllManagers)
-  .get("/field_officer_record", auth(USER_ROLE.admin), UserController.getFieldOfficerRecord)
+  .get(
+    '/all_managers',
+    auth(USER_ROLE.admin, USER_ROLE.hr),
+    UserController.getAllManagers,
+  )
+  .get(
+    '/field_officer_record',
+    auth(USER_ROLE.admin),
+    UserController.getFieldOfficerRecord,
+  )
   .patch(
     '/assign_spoke',
     auth(USER_ROLE.hubManager),

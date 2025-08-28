@@ -2,6 +2,13 @@ import { Model, ObjectId } from 'mongoose';
 
 export type TApplicationStatus = 'pending' | 'approved' | 'rejected' | 'closed';
 
+export interface IRepaymentsDates {
+  month: string;
+  dueDate: string;
+  status?: 'pending' | 'paid';
+  _id?: string;
+}
+
 export type TLoanApplication = {
   // common
   clientId: ObjectId;
@@ -32,6 +39,7 @@ export type TLoanApplication = {
   preferredContact: string;
   term: string;
   nid: string;
+  repaymentsDates: IRepaymentsDates[];
   startDate: Date;
   endDate: Date;
   loanStatus: TApplicationStatus;
