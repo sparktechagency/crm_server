@@ -4,8 +4,9 @@ import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import Repayments from '../repayments/repayments.model';
 import { StatisticHelper } from '../../helper/staticsHelper';
 import User from '../user/user.model';
-import { USER_ROLE } from '../../constant';
+import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import { commonPipeline } from './dashboard.utils';
+import LoanApplication from '../loanApplication/loanApplication.model';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -127,8 +128,54 @@ const hrDashboardCount = async (
   };
 };
 
+const supervisorDashboardOverview = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  // Run all async operations concurrently
+  const [totalApplicationApprove, totalApplicationRejected, totalApplication] =
+    await Promise.all([
+      LoanApplication.countDocuments({
+        supervisorApproval: LOAN_APPLICATION_STATUS.approved,
+      }),
+
+      LoanApplication.countDocuments({
+        supervisorApproval: LOAN_APPLICATION_STATUS.rejected,
+      }),
+
+      LoanApplication.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        ...commonPipeline,
+      ]),
+    ]);
+
+  // Format the aggregated result
+  const formattedResult = StatisticHelper.formattedResult(
+    totalApplication,
+    'data',
+    'count',
+  );
+
+  // Return the results
+  return {
+    totalApplicationApprove,
+    totalApplicationRejected,
+    totalApplicationChart: formattedResult,
+  };
+};
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
   hrDashboardCount,
+  supervisorDashboardOverview,
 };

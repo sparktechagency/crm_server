@@ -17,9 +17,14 @@ router
     dashboardController.totalLeadsChart,
   )
   .get(
-    '/hr_dashboard_count',
+    '/hr_dashboard_overview',
     auth(USER_ROLE.hr),
     dashboardController.hrDashboardCount,
+  )
+  .get(
+    '/supervisor_dashboard_overview',
+    auth(USER_ROLE.supervisor),
+    dashboardController.supervisorDashboardOverview,
   );
 
 export const DashboardRoutes = router;
