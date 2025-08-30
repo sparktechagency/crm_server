@@ -29,7 +29,21 @@ const totalLeadsChart = catchAsync(async (req, res) => {
   });
 });
 
+const hrDashboardCount = catchAsync(async (req, res) => {
+  const result = await dashboardService.hrDashboardCount(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Dashboard fetched successfully',
+    data: result,
+  });
+});
+
 export const dashboardController = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
+  hrDashboardCount,
 };

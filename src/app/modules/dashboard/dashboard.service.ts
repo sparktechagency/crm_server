@@ -3,6 +3,9 @@ import { TAuthUser } from '../../interface/authUser';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import Repayments from '../repayments/repayments.model';
 import { StatisticHelper } from '../../helper/staticsHelper';
+import User from '../user/user.model';
+import { USER_ROLE } from '../../constant';
+import { commonPipeline } from './dashboard.utils';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -55,38 +58,7 @@ const totalLeadsChart = async (
         ],
       },
     },
-
-    {
-      $group: {
-        _id: {
-          month: { $month: '$createdAt' },
-          isClient: '$isClient',
-        },
-        count: { $sum: 1 },
-      },
-    },
-
-    {
-      $group: {
-        _id: '$_id.month',
-        data: {
-          $push: {
-            role: '$_id.role',
-            count: '$count',
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        month: '$_id',
-        data: 1,
-      },
-    },
-    {
-      $sort: { month: 1 },
-    },
+    ...commonPipeline,
   ]);
 
   const formattedResult = StatisticHelper.formattedResult(
@@ -98,7 +70,65 @@ const totalLeadsChart = async (
   return formattedResult;
 };
 
+const hrDashboardCount = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  // Run all queries concurrently
+  const [totalFieldOfficer, totalManagers, fieldOfficerChart] =
+    await Promise.all([
+      // Total Field Officers
+      User.countDocuments({
+        role: USER_ROLE.fieldOfficer,
+      }),
+
+      // Total Managers (Hub and Spoke)
+      User.aggregate([
+        {
+          $match: {
+            role: { $in: [USER_ROLE.hubManager, USER_ROLE.spokeManager] },
+          },
+        },
+        {
+          $count: 'totalManagers',
+        },
+      ]),
+
+      // Field Officer Chart Data
+      User.aggregate([
+        {
+          $match: {
+            role: USER_ROLE.fieldOfficer,
+            createdAt: { $gte: startDate, $lte: endDate },
+          },
+        },
+        ...commonPipeline,
+      ]),
+    ]);
+
+  // Format the result for the field officer chart
+  const formattedResult = StatisticHelper.formattedResult(
+    fieldOfficerChart,
+    'data',
+    'count',
+  );
+
+  // Return the aggregated data
+  return {
+    totalFieldOfficer,
+    totalManagers:
+      totalManagers.length > 0 ? totalManagers[0].totalManagers : 0,
+    formattedResult,
+  };
+};
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
+  hrDashboardCount,
 };

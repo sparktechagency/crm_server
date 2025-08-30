@@ -15,6 +15,11 @@ router
     '/leads_chart',
     auth(USER_ROLE.fieldOfficer),
     dashboardController.totalLeadsChart,
+  )
+  .get(
+    '/hr_dashboard_count',
+    auth(USER_ROLE.hr),
+    dashboardController.hrDashboardCount,
   );
 
 export const DashboardRoutes = router;
