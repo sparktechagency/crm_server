@@ -17,6 +17,20 @@ const createRepayments = catchAsync(async (req, res) => {
   });
 });
 
+const getAllRepayments = catchAsync(async (req, res) => {
+  const result = await RepaymentsService.getAllRepayments(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Repayments fetched successfully',
+    data: result,
+  });
+});
+
 export const RepaymentsController = {
   createRepayments,
+  getAllRepayments,
 };

@@ -7,11 +7,17 @@ import { RepaymentsValidation } from './repayments.validation';
 
 const router = Router();
 
-router.post(
-  '/create',
-  auth(USER_ROLE.fieldOfficer),
-  validateRequest(RepaymentsValidation.createRepaymentsSchema),
-  RepaymentsController.createRepayments,
-);
+router
+  .post(
+    '/create',
+    auth(USER_ROLE.fieldOfficer),
+    validateRequest(RepaymentsValidation.createRepaymentsSchema),
+    RepaymentsController.createRepayments,
+  )
+  .get(
+    '/',
+    auth(USER_ROLE.fieldOfficer),
+    RepaymentsController.getAllRepayments,
+  );
 
 export const RepaymentsRoutes = router;

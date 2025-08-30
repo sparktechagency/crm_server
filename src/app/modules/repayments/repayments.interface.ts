@@ -6,6 +6,7 @@ export type TRepayments = {
   clientId: ObjectId;
   hubId: ObjectId;
   spokeId: ObjectId;
+  fieldOfficerId: ObjectId;
 
   // non-relational fields
   clientUid: string;

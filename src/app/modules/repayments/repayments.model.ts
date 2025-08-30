@@ -23,6 +23,11 @@ const repaymentsSchema = new Schema<TRepayments>(
       ref: 'LoanApplication',
       required: [true, 'Application id is required'],
     },
+    fieldOfficerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Field officer id is required'],
+    },
     month: {
       type: String,
       required: [true, 'Month is required'],
