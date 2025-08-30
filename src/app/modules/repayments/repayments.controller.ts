@@ -30,7 +30,21 @@ const getAllRepayments = catchAsync(async (req, res) => {
   });
 });
 
+const confirmRepayments = catchAsync(async (req, res) => {
+  const result = await RepaymentsService.confirmRepayments(
+    req.params.id,
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Repayments confirmed successfully',
+    data: result,
+  });
+});
+
 export const RepaymentsController = {
   createRepayments,
   getAllRepayments,
+  confirmRepayments,
 };

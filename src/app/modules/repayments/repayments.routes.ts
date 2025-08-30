@@ -14,10 +14,11 @@ router
     validateRequest(RepaymentsValidation.createRepaymentsSchema),
     RepaymentsController.createRepayments,
   )
-  .get(
-    '/',
+  .get('/', auth(USER_ROLE.fieldOfficer), RepaymentsController.getAllRepayments)
+  .patch(
+    '/confirm/:id',
     auth(USER_ROLE.fieldOfficer),
-    RepaymentsController.getAllRepayments,
+    RepaymentsController.confirmRepayments,
   );
 
 export const RepaymentsRoutes = router;

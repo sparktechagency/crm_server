@@ -16,6 +16,7 @@ import { installmentAmountCalculator } from './loanApplication.utils';
 import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import AppError from '../../utils/AppError';
 import httpStatus from 'http-status';
+import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 
 const createLoanApplication = async (
   user: TAuthUser,
@@ -74,6 +75,14 @@ const createLoanApplication = async (
     // Save loan application
     const loanApplication = await LoanApplication.create(
       [loanApplicationInfo],
+      { session },
+    );
+
+    await LeadsAndClientsModel.findOneAndUpdate(
+      {
+        _id: createLead._id,
+      },
+      { isClient: true },
       { session },
     );
 
