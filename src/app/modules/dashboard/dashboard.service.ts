@@ -173,9 +173,59 @@ const supervisorDashboardOverview = async (
   };
 };
 
+const hubManagerDashboardCount = async (user: TAuthUser) => {
+  const userId = new mongoose.Types.ObjectId(String(user._id));
+
+  // Run all async operations concurrently using Promise.all
+  const [totalClients, totalApplication, totalCollection, totalOverdue] =
+    await Promise.all([
+      // Total clients
+      LeadsAndClientsModel.countDocuments({
+        hubId: userId,
+        isClient: true,
+      }),
+
+      // Total applications
+      LoanApplication.countDocuments({
+        hubId: userId,
+      }),
+
+      // Total collection (aggregate the installment amounts)
+      Repayments.aggregate([
+        { $match: { hubId: userId } },
+        { $group: { _id: null, total: { $sum: '$installmentAmount' } } },
+        { $project: { _id: 0, total: 1 } },
+      ]),
+
+      // Total overdue (aggregate the penalties)
+      Repayments.aggregate([
+        { $match: { hubId: userId, status: 'overdue' } },
+        { $group: { _id: null, total: { $sum: '$penalty' } } },
+        { $project: { _id: 0, total: 1 } },
+      ]),
+    ]);
+
+  // Return the results, ensuring that collection and overdue have defaults if empty
+  return {
+    totalClients,
+    totalApplication,
+    totalCollection: totalCollection.length > 0 ? totalCollection[0].total : 0,
+    totalOverdue: totalOverdue.length > 0 ? totalOverdue[0].total : 0,
+  };
+};
+
+const hubManagerCollectionReport = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  return user;
+};
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
   hrDashboardCount,
   supervisorDashboardOverview,
+  hubManagerDashboardCount,
+  hubManagerCollectionReport,
 };

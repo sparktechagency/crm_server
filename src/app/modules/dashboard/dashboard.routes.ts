@@ -25,6 +25,16 @@ router
     '/supervisor_dashboard_overview',
     auth(USER_ROLE.supervisor),
     dashboardController.supervisorDashboardOverview,
+  )
+  .get(
+    '/hub_manager_dashboard_count',
+    auth(USER_ROLE.hubManager),
+    dashboardController.hubManagerDashboardCount,
+  )
+  .get(
+    '/hub_manager_collection_report',
+    auth(USER_ROLE.hubManager),
+    dashboardController.hubManagerCollectionReport,
   );
 
 export const DashboardRoutes = router;
