@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
+import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
+import { StatisticHelper } from '../../helper/staticsHelper';
 import { TAuthUser } from '../../interface/authUser';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
-import Repayments from '../repayments/repayments.model';
-import { StatisticHelper } from '../../helper/staticsHelper';
-import User from '../user/user.model';
-import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
-import { commonPipeline } from './dashboard.utils';
 import LoanApplication from '../loanApplication/loanApplication.model';
+import Repayments from '../repayments/repayments.model';
+import User from '../user/user.model';
+import { commonPipeline } from './dashboard.utils';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -218,7 +218,60 @@ const hubManagerCollectionReport = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-  return user;
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  const result = await Repayments.aggregate([
+    {
+      $match: {
+        hubId: new mongoose.Types.ObjectId(String(user._id)),
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: { $month: '$createdAt' },
+        },
+        totalInstallmentAmount: { $sum: '$installmentAmount' },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.month',
+        data: {
+          $push: {
+            totalInstallmentAmount: '$totalInstallmentAmount',
+            count: '$totalInstallmentAmount',
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        month: '$_id',
+        data: 1,
+      },
+    },
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  const formattedResult = StatisticHelper.formattedResult(
+    result,
+    'data',
+    'count',
+  );
+
+  return formattedResult;
 };
 
 export const dashboardService = {
