@@ -12,6 +12,7 @@ import User from './user.model';
 import { findUserWithUid, uidForUserRole } from './user.utils';
 import { minuteToSecond } from '../../utils/minitToSecond';
 import { TUser } from './user.interface';
+import { TMeta } from '../../utils/sendResponse';
 
 const createUsers = async (payload: Record<string, unknown>) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
@@ -21,7 +22,6 @@ const createUsers = async (payload: Record<string, unknown>) => {
   const uid = hubUid ? hubUid : spokeUid;
   const data = await findUserWithUid(uid as string);
 
-  console.log(generatePassword);
   const userData = {
     uid: await generateUID(User, uidKey),
     password: generatePassword,
@@ -84,7 +84,7 @@ const getUsersBaseOnRole = async (
   query: Record<string, unknown>,
 ) => {
   const { role } = query;
-  const cacheKey = `users::${user._id}`;
+  const cacheKey = `users::${user._id}-${role}`;
   // Try to fetch from Redis cache first
   const cached = await getCachedData<{ result: TUser[] }>(cacheKey);
   if (cached) {
@@ -168,6 +168,49 @@ const deleteUsers = async (id: string, user: TAuthUser) => {
   return result;
 };
 
+const getAllManagers = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const cacheKey = `getAllManagers-${user._id}-${query?.role}`;
+
+  const cached = await getCachedData<{ meta: TMeta; result: TUser[] }>(
+    cacheKey,
+  );
+  if (cached) {
+    console.log('🚀 Serving from Redis cache');
+    return cached;
+  }
+
+  const managersQuery = new QueryBuilder(
+    User.find({
+      $or: [{ role: USER_ROLE.hubManager }, { role: USER_ROLE.spokeManager }],
+    }),
+    query,
+  )
+    .search(['customFields.name', 'email', 'phoneNumber'])
+    .sort()
+    .paginate()
+    .filter(['status', 'role']);
+
+  const [result, meta] = await Promise.all([
+    managersQuery.queryModel,
+    managersQuery.countTotal(),
+  ]);
+
+  const time = minuteToSecond(5);
+  await cacheData(cacheKey, { meta, result }, time);
+
+  return { meta, result };
+};
+
+const getFieldOfficerRecord = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  return user;
+};
+
 export const UserService = {
   updateUserActions,
   createUsers,
@@ -175,4 +218,6 @@ export const UserService = {
   updateUsers,
   assignSpoke,
   deleteUsers,
+  getAllManagers,
+  getFieldOfficerRecord,
 };

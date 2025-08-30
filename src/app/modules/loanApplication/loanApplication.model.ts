@@ -1,5 +1,25 @@
 import { model, Schema } from 'mongoose';
-import { TLoanApplication } from './loanApplication.interface';
+import {
+  IRepaymentsDates,
+  TLoanApplication,
+} from './loanApplication.interface';
+
+const repaymentsDateSchema = new Schema<IRepaymentsDates>({
+  dueDate: {
+    type: String,
+    required: [true, 'Due date is required'],
+  },
+  month: {
+    type: String,
+    required: [true, 'Month is required'],
+  },
+  status: {
+    type: String,
+    required: [true, 'Status is required'],
+    enum: ['pending', 'paid'],
+    default: 'pending',
+  },
+});
 
 const LoanApplicationSchema = new Schema<TLoanApplication>(
   {
@@ -77,7 +97,7 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
     loanStatus: {
       type: String,
       required: [true, 'Loan status is required'],
-      enum: ['approved', 'rejected', 'pending'],
+      enum: ['approved', 'rejected', 'pending', 'closed'],
       default: 'pending',
     },
     supervisorApproval: {
@@ -90,6 +110,15 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
       type: String,
       required: [true, 'Preferred contact is required'],
     },
+    totalRepayment: {
+      type: Number,
+      required: [true, 'Total repayment is required'],
+    },
+    repaymentsDates: {
+      type: [repaymentsDateSchema],
+      required: [true, 'Repayments dates are required'],
+    },
+    grossProfit: { type: Number, required: [true, 'Gross profit is required'] },
     term: { type: String, required: [true, 'Term is required'] },
     nid: { type: String, required: [true, 'NID is required'] },
   },

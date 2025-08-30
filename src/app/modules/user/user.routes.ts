@@ -30,6 +30,16 @@ router
     ),
     UserController.getUsersBaseOnRole,
   )
+  .get(
+    '/all_managers',
+    auth(USER_ROLE.admin, USER_ROLE.hr),
+    UserController.getAllManagers,
+  )
+  .get(
+    '/field_officer_record',
+    auth(USER_ROLE.admin),
+    UserController.getFieldOfficerRecord,
+  )
   .patch(
     '/assign_spoke',
     auth(USER_ROLE.hubManager),
@@ -38,7 +48,7 @@ router
   )
   .patch(
     '/update_users/:id',
-    auth(USER_ROLE.hubManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.admin, USER_ROLE.hr),
     upload.fields([
       { name: 'image', maxCount: 1 },
       { name: 'cv', maxCount: 1 },
@@ -53,7 +63,7 @@ router
   )
   .delete(
     '/delete_users/:id',
-    auth(USER_ROLE.hubManager, USER_ROLE.admin),
+    auth(USER_ROLE.hubManager, USER_ROLE.admin, USER_ROLE.hr),
     UserController.deleteUsers,
   );
 

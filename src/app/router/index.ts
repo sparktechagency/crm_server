@@ -10,6 +10,8 @@ import { NotificationRoutes } from '../modules/notification/notification.routes'
 import { StaticContentRoutes } from '../modules/staticContent/staticContent.routes';
 import { UserRoutes } from '../modules/user/user.routes';
 import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
+import { RepaymentsRoutes } from '../modules/repayments/repayments.routes';
+import { DashboardRoutes } from '../modules/dashboard/dashboard.routes';
 const router = Router();
 
 type TRoutes = {
@@ -53,6 +55,14 @@ const routes: TRoutes[] = [
   {
     path: '/location_profile',
     route: LocationProfileRoutes,
+  },
+  {
+    path: '/repayments',
+    route: RepaymentsRoutes,
+  },
+  {
+    path: '/dashboard',
+    route: DashboardRoutes,
   },
 
   // fields related routes
