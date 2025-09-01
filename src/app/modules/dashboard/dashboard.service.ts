@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import { StatisticHelper } from '../../helper/staticsHelper';
@@ -7,6 +8,7 @@ import LoanApplication from '../loanApplication/loanApplication.model';
 import Repayments from '../repayments/repayments.model';
 import User from '../user/user.model';
 import { commonPipeline } from './dashboard.utils';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -274,12 +276,10 @@ const hubManagerCollectionReport = async (
   return formattedResult;
 };
 
-
 const hubManagerLoanApprovalReport = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-
   const { year } = query;
   const { startDate, endDate } = StatisticHelper.statisticHelper(
     year as string,
@@ -289,13 +289,13 @@ const hubManagerLoanApprovalReport = async (
     {
       $match: {
         hubId: new mongoose.Types.ObjectId(String(user._id)),
-        hubManagerApproval: { $ne: "pending" },
+        hubManagerApproval: { $ne: 'pending' },
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },
     {
       $group: {
-        _id: "$hubManagerApproval",
+        _id: '$hubManagerApproval',
         count: { $sum: 1 },
       },
     },
@@ -304,10 +304,13 @@ const hubManagerLoanApprovalReport = async (
   // Check if there is any result, otherwise set defaults
   const totalApplications = result.reduce((sum, item) => sum + item.count, 0);
   const statuses = ['approved', 'rejected'];
-  const percentages = statuses.map(status => {
-    const statusItem = result.find(item => item._id === status);
-    const count = statusItem ? statusItem.count : 0; 
-    const percentage = totalApplications > 0 ? ((count / totalApplications) * 100).toFixed(2) : 0;
+  const percentages = statuses.map((status) => {
+    const statusItem = result.find((item) => item._id === status);
+    const count = statusItem ? statusItem.count : 0;
+    const percentage =
+      totalApplications > 0
+        ? ((count / totalApplications) * 100).toFixed(2)
+        : 0;
     return {
       status,
       count,
@@ -315,10 +318,114 @@ const hubManagerLoanApprovalReport = async (
     };
   });
 
+  return percentages;
+};
 
-  return percentages
-}
+const allFieldOfficerCollection = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const repaymentQuery = new AggregationQueryBuilder(query);
 
+  const result = await repaymentQuery
+    .customPipeline([
+      {
+        $match: {
+          hubId: new mongoose.Types.ObjectId(String(user._id)),
+        },
+      },
+      {
+        $project: {
+          fieldOfficerId: 1,
+          paidOn: { $dateToString: { format: '%Y-%m-%d', date: '$paidOn' } },
+          installmentAmount: 1,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            fieldOfficerId: '$fieldOfficerId',
+            paidOn: '$paidOn',
+          },
+          totalInstallmentAmount: { $sum: '$installmentAmount' },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.fieldOfficerId',
+          dates: {
+            $push: {
+              date: '$_id.paidOn',
+              totalInstallmentAmount: '$totalInstallmentAmount',
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'fieldOfficer',
+        },
+      },
+      {
+        $unwind: {
+          path: '$fieldOfficer',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          fieldOfficer: 1,
+          dates: 1,
+        },
+      },
+      {
+        $unwind: '$dates',
+      },
+      {
+        $project: {
+          _id: 0,
+          fieldOfficer: 1,
+          date: '$dates.date',
+          totalInstallmentAmount: '$dates.totalInstallmentAmount',
+        },
+      },
+    ])
+    .filter(['fieldOfficerId', 'paidOn'])
+    .sort()
+    .paginate()
+    .execute(Repayments);
+
+  const meta = await repaymentQuery.countTotal(Repayments);
+
+  // Now merge everything into a single array
+  const mergedData = result.reduce((acc: any, item: any) => {
+    const existing = acc.find(
+      (entry: any) =>
+        entry.fieldOfficer._id.toString() === item.fieldOfficer._id.toString(),
+    );
+
+    if (existing) {
+      existing.dates.push({
+        date: item.date,
+        totalInstallmentAmount: item.totalInstallmentAmount,
+      });
+    } else {
+      acc.push({
+        fieldOfficer: item.fieldOfficer,
+        date: item.date,
+        totalInstallmentAmount: item.totalInstallmentAmount,
+      });
+    }
+
+    return acc;
+  }, []);
+
+  return { meta, result: mergedData };
+};
 
 export const dashboardService = {
   fieldOfficerDashboardCount,
@@ -327,5 +434,6 @@ export const dashboardService = {
   supervisorDashboardOverview,
   hubManagerDashboardCount,
   hubManagerCollectionReport,
-  hubManagerLoanApprovalReport
+  hubManagerLoanApprovalReport,
+  allFieldOfficerCollection,
 };

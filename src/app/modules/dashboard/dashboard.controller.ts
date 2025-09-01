@@ -50,7 +50,7 @@ const supervisorDashboardOverview = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Dashboard fetched successfully',
+    message: 'Supervisor dashboard fetched successfully',
     data: result,
   });
 });
@@ -62,7 +62,7 @@ const hubManagerDashboardCount = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Dashboard fetched successfully',
+    message: 'HUb manager dashboard count fetched successfully',
     data: result,
   });
 });
@@ -75,12 +75,12 @@ const hubManagerCollectionReport = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Dashboard fetched successfully',
+    message: 'Hub manager collection report fetched successfully',
     data: result,
   });
 });
 
-const  hubManagerLoanApprovalReport = catchAsync(async (req, res) => {
+const hubManagerLoanApprovalReport = catchAsync(async (req, res) => {
   const result = await dashboardService.hubManagerLoanApprovalReport(
     req.user as TAuthUser,
     req.query,
@@ -88,10 +88,23 @@ const  hubManagerLoanApprovalReport = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
-    message: 'Dashboard fetched successfully',
+    message: 'Hub manager loan approval report fetched successfully',
     data: result,
   });
-})
+});
+
+const allFieldOfficerCollection = catchAsync(async (req, res) => {
+  const result = await dashboardService.allFieldOfficerCollection(
+    req.user as TAuthUser,
+    req.query,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'all field officer collection fetched successfully',
+    data: result,
+  });
+});
 
 export const dashboardController = {
   fieldOfficerDashboardCount,
@@ -100,5 +113,6 @@ export const dashboardController = {
   supervisorDashboardOverview,
   hubManagerDashboardCount,
   hubManagerCollectionReport,
-  hubManagerLoanApprovalReport
+  hubManagerLoanApprovalReport,
+  allFieldOfficerCollection,
 };
