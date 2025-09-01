@@ -11,8 +11,11 @@ import LoanApplication from '../loanApplication/loanApplication.model';
 import { TRepayments } from './repayments.interface';
 import Repayments from './repayments.model';
 import { calculatePenalty, findClientAndLoan } from './repayments.utils';
+import { USER_ROLE } from '../../constant';
 
 const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
+  const { month, ...rest } = payload;
+
   const { client: findClient, loan: findLoan } = await findClientAndLoan(
     payload.clientUid,
     payload.loanUid,
@@ -35,7 +38,10 @@ const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
   const penalty = calculatePenalty(loanRepaymentsMonth);
 
   const repaymentData = {
-    ...payload,
+    month,
+    customFields: {
+      ...rest,
+    },
     installmentAmount: findLoan.installMentAmount,
     clientId: findClient._id,
     applicationId: findLoan._id,
@@ -80,13 +86,23 @@ const getAllRepayments = async (
     return cached;
   }
 
+  let matchStage = {};
+
+  if (user.role === USER_ROLE.fieldOfficer) {
+    matchStage = {
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
+      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+    };
+  } else if (user.role === USER_ROLE.admin) {
+    matchStage = {};
+  }
+
   const result = await repaymentQuery
     .customPipeline([
       {
         $match: {
-          fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-          hubId: new mongoose.Types.ObjectId(String(user.hubId)),
-          spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+          ...matchStage,
         },
       },
       {
@@ -125,8 +141,14 @@ const confirmRepayments = async (id: string, user: TAuthUser) => {
   return result;
 };
 
+const deleteRepayments = async (id: string) => {
+  const result = await Repayments.findByIdAndDelete(id);
+  return result;
+};
+
 export const RepaymentsService = {
   createRepayments,
   getAllRepayments,
   confirmRepayments,
+  deleteRepayments,
 };

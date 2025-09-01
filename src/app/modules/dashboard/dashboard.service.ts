@@ -230,7 +230,11 @@ const hubManagerCollectionReport = async (
       ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
       : user.role === USER_ROLE.spokeManager
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
-        : {};
+        : user.role === USER_ROLE.fieldOfficer
+          ? {
+              fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+            }
+          : {};
 
   const result = await Repayments.aggregate([
     {
@@ -303,6 +307,11 @@ const hubManagerLoanApprovalReport = async (
     commonMatchStage = {
       loanStatus: { $ne: 'pending' },
     };
+  } else if (user.role === USER_ROLE.fieldOfficer) {
+    commonMatchStage = {
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+      loanStatus: { $ne: 'pending' },
+    };
   }
 
   const result = await LoanApplication.aggregate([
@@ -351,7 +360,11 @@ const allFieldOfficerCollection = async (
       ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
       : user.role === USER_ROLE.spokeManager
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
-        : {};
+        : user.role === USER_ROLE.fieldOfficer
+          ? {
+              spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+            }
+          : {};
 
   const result = await repaymentQuery
     .customPipeline([
@@ -365,6 +378,7 @@ const allFieldOfficerCollection = async (
           fieldOfficerId: 1,
           paidOn: { $dateToString: { format: '%Y-%m-%d', date: '$paidOn' } },
           installmentAmount: 1,
+          status: 1,
         },
       },
       {
@@ -374,6 +388,7 @@ const allFieldOfficerCollection = async (
             paidOn: '$paidOn',
           },
           totalInstallmentAmount: { $sum: '$installmentAmount' },
+          status: { $first: '$status' },
         },
       },
       {
@@ -385,6 +400,8 @@ const allFieldOfficerCollection = async (
               totalInstallmentAmount: '$totalInstallmentAmount',
             },
           },
+          status: { $first: '$status' },
+          paidOn: { $first: '$_id.paidOn' },
         },
       },
       {
@@ -406,17 +423,30 @@ const allFieldOfficerCollection = async (
           _id: 0,
           fieldOfficer: 1,
           dates: 1,
+          status: 1,
+          paidOn: 1,
         },
       },
       {
         $unwind: '$dates',
       },
       {
+        $group: {
+          _id: '$fieldOfficer._id',
+          fieldOfficer: { $first: '$fieldOfficer' },
+          totalInstallmentAmount: { $sum: '$dates.totalInstallmentAmount' },
+          dates: { $push: '$dates' },
+          status: { $first: '$status' },
+          paidOn: { $first: '$paidOn' },
+        },
+      },
+      {
         $project: {
           _id: 0,
           fieldOfficer: 1,
-          date: '$dates.date',
-          totalInstallmentAmount: '$dates.totalInstallmentAmount',
+          paidOn: 1,
+          totalInstallmentAmount: 1,
+          status: 1,
         },
       },
     ])
@@ -427,30 +457,7 @@ const allFieldOfficerCollection = async (
 
   const meta = await repaymentQuery.countTotal(Repayments);
 
-  // Now merge everything into a single array
-  const mergedData = result.reduce((acc: any, item: any) => {
-    const existing = acc.find(
-      (entry: any) =>
-        entry.fieldOfficer._id.toString() === item.fieldOfficer._id.toString(),
-    );
-
-    if (existing) {
-      existing?.dates?.push({
-        date: item.date,
-        totalInstallmentAmount: item.totalInstallmentAmount,
-      });
-    } else {
-      acc?.push({
-        fieldOfficer: item.fieldOfficer,
-        date: item.date,
-        totalInstallmentAmount: item.totalInstallmentAmount,
-      });
-    }
-
-    return acc;
-  }, []);
-
-  return { meta, result: mergedData };
+  return { meta, result };
 };
 
 const spokeManagerCount = async (user: TAuthUser) => {
@@ -459,8 +466,19 @@ const spokeManagerCount = async (user: TAuthUser) => {
     $lte: new Date(new Date().setHours(23, 59, 59, 999)),
   };
 
+  const userId =
+    user.role === USER_ROLE.spokeManager
+      ? {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : user.role === USER_ROLE.fieldOfficer
+        ? {
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          }
+        : {};
+
   const matchCriteria = {
-    spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    ...userId,
     createdAt: todayDateRange,
   };
 

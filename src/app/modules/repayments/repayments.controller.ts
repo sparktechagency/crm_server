@@ -43,8 +43,19 @@ const confirmRepayments = catchAsync(async (req, res) => {
   });
 });
 
+const deleteRepayments = catchAsync(async (req, res) => {
+  const result = await RepaymentsService.deleteRepayments(req.params.id);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Repayments deleted successfully',
+    data: result,
+  });
+});
+
 export const RepaymentsController = {
   createRepayments,
   getAllRepayments,
   confirmRepayments,
+  deleteRepayments,
 };
