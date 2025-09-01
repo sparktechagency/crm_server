@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { AuthRoutes } from '../modules/auth/auth.routes';
+import { DashboardRoutes } from '../modules/dashboard/dashboard.routes';
 import { HubManagerRoutes } from '../modules/hubManager/hubManager.routes';
 import { LeadsAndClientsRoutes } from '../modules/leadsAndClients/leadsAndClients.routes';
 import { LeadsAndClientsFieldRoutes } from '../modules/leadsAndClients/leadsAndClientsFields/LeadsAndClientsField.routes';
@@ -7,11 +8,11 @@ import { LoanApplicationRoutes } from '../modules/loanApplication/loanApplicatio
 import { LoansRoutes } from '../modules/loans/loans.routes';
 import { LocationProfileRoutes } from '../modules/locationProfile/locationProfile.routes';
 import { NotificationRoutes } from '../modules/notification/notification.routes';
+import { RepaymentsRoutes } from '../modules/repayments/repayments.routes';
+import { RepaymentsFieldRoutes } from '../modules/repayments/repaymentsField/repaymentsField.routes';
 import { StaticContentRoutes } from '../modules/staticContent/staticContent.routes';
 import { UserRoutes } from '../modules/user/user.routes';
 import { UserFieldRoutes } from '../modules/user/userField/user.field.routes';
-import { RepaymentsRoutes } from '../modules/repayments/repayments.routes';
-import { DashboardRoutes } from '../modules/dashboard/dashboard.routes';
 const router = Router();
 
 type TRoutes = {
@@ -73,6 +74,10 @@ const routes: TRoutes[] = [
   {
     path: '/leads_and_clients_field',
     route: LeadsAndClientsFieldRoutes,
+  },
+  {
+    path: '/repayments_field',
+    route: RepaymentsFieldRoutes,
   },
 ];
 

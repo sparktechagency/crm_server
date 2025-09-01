@@ -33,22 +33,32 @@ router
   )
   .get(
     '/collection_report',
-    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
+    auth(
+      USER_ROLE.hubManager,
+      USER_ROLE.spokeManager,
+      USER_ROLE.admin,
+      USER_ROLE.fieldOfficer,
+    ),
     dashboardController.hubManagerCollectionReport,
   )
   .get(
-    '/hub_manager_loan_approval_report',
-    auth(USER_ROLE.hubManager),
+    '/loan_approval_report',
+    auth(USER_ROLE.hubManager, USER_ROLE.admin, USER_ROLE.fieldOfficer),
     dashboardController.hubManagerLoanApprovalReport,
   )
   .get(
     '/all_field_officer_collection',
-    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
+    auth(
+      USER_ROLE.hubManager,
+      USER_ROLE.spokeManager,
+      USER_ROLE.admin,
+      USER_ROLE.fieldOfficer,
+    ),
     dashboardController.allFieldOfficerCollection,
   )
   .get(
-    '/spoke_manager_count',
-    auth(USER_ROLE.spokeManager),
+    '/repayments_count',
+    auth(USER_ROLE.spokeManager, USER_ROLE.admin, USER_ROLE.fieldOfficer),
     dashboardController.spokeManagerCount,
   )
   .get(

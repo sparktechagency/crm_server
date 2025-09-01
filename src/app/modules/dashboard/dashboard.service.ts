@@ -227,12 +227,14 @@ const hubManagerCollectionReport = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? {
-          hubId: new mongoose.Types.ObjectId(String(user._id)),
-        }
-      : {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        };
+      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      : user.role === USER_ROLE.spokeManager
+        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        : user.role === USER_ROLE.fieldOfficer
+          ? {
+              fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+            }
+          : {};
 
   const result = await Repayments.aggregate([
     {
@@ -294,11 +296,28 @@ const hubManagerLoanApprovalReport = async (
     year as string,
   );
 
+  let commonMatchStage = {};
+
+  if (user.role === USER_ROLE.hubManager) {
+    commonMatchStage = {
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      hubManagerApproval: { $ne: 'pending' },
+    };
+  } else if (user.role === USER_ROLE.admin) {
+    commonMatchStage = {
+      loanStatus: { $ne: 'pending' },
+    };
+  } else if (user.role === USER_ROLE.fieldOfficer) {
+    commonMatchStage = {
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+      loanStatus: { $ne: 'pending' },
+    };
+  }
+
   const result = await LoanApplication.aggregate([
     {
       $match: {
-        hubId: new mongoose.Types.ObjectId(String(user._id)),
-        hubManagerApproval: { $ne: 'pending' },
+        ...commonMatchStage,
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },
@@ -338,12 +357,14 @@ const allFieldOfficerCollection = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? {
-          hubId: new mongoose.Types.ObjectId(String(user._id)),
-        }
-      : {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        };
+      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      : user.role === USER_ROLE.spokeManager
+        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        : user.role === USER_ROLE.fieldOfficer
+          ? {
+              spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+            }
+          : {};
 
   const result = await repaymentQuery
     .customPipeline([
@@ -357,6 +378,7 @@ const allFieldOfficerCollection = async (
           fieldOfficerId: 1,
           paidOn: { $dateToString: { format: '%Y-%m-%d', date: '$paidOn' } },
           installmentAmount: 1,
+          status: 1,
         },
       },
       {
@@ -366,6 +388,7 @@ const allFieldOfficerCollection = async (
             paidOn: '$paidOn',
           },
           totalInstallmentAmount: { $sum: '$installmentAmount' },
+          status: { $first: '$status' },
         },
       },
       {
@@ -377,6 +400,8 @@ const allFieldOfficerCollection = async (
               totalInstallmentAmount: '$totalInstallmentAmount',
             },
           },
+          status: { $first: '$status' },
+          paidOn: { $first: '$_id.paidOn' },
         },
       },
       {
@@ -398,17 +423,30 @@ const allFieldOfficerCollection = async (
           _id: 0,
           fieldOfficer: 1,
           dates: 1,
+          status: 1,
+          paidOn: 1,
         },
       },
       {
         $unwind: '$dates',
       },
       {
+        $group: {
+          _id: '$fieldOfficer._id',
+          fieldOfficer: { $first: '$fieldOfficer' },
+          totalInstallmentAmount: { $sum: '$dates.totalInstallmentAmount' },
+          dates: { $push: '$dates' },
+          status: { $first: '$status' },
+          paidOn: { $first: '$paidOn' },
+        },
+      },
+      {
         $project: {
           _id: 0,
           fieldOfficer: 1,
-          date: '$dates.date',
-          totalInstallmentAmount: '$dates.totalInstallmentAmount',
+          paidOn: 1,
+          totalInstallmentAmount: 1,
+          status: 1,
         },
       },
     ])
@@ -419,57 +457,40 @@ const allFieldOfficerCollection = async (
 
   const meta = await repaymentQuery.countTotal(Repayments);
 
-  // Now merge everything into a single array
-  const mergedData = result.reduce((acc: any, item: any) => {
-    const existing = acc.find(
-      (entry: any) =>
-        entry.fieldOfficer._id.toString() === item.fieldOfficer._id.toString(),
-    );
-
-    if (existing) {
-      existing?.dates?.push({
-        date: item.date,
-        totalInstallmentAmount: item.totalInstallmentAmount,
-      });
-    } else {
-      acc?.push({
-        fieldOfficer: item.fieldOfficer,
-        date: item.date,
-        totalInstallmentAmount: item.totalInstallmentAmount,
-      });
-    }
-
-    return acc;
-  }, []);
-
-  return { meta, result: mergedData };
+  return { meta, result };
 };
 
 const spokeManagerCount = async (user: TAuthUser) => {
-  const todayMatchCriteria = {
-    spokeId: new mongoose.Types.ObjectId(String(user._id)),
-    createdAt: {
-      $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-      $lte: new Date(new Date().setHours(23, 59, 59, 999)),
-    },
+  const todayDateRange = {
+    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+    $lte: new Date(new Date().setHours(23, 59, 59, 999)),
   };
 
-  const todayCollectionAmount = await getAggregateAmount(
-    user,
-    todayMatchCriteria,
-    '$installmentAmount',
-  );
+  const userId =
+    user.role === USER_ROLE.spokeManager
+      ? {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : user.role === USER_ROLE.fieldOfficer
+        ? {
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          }
+        : {};
 
-  const overdueMatchCriteria = {
-    status: 'overdue',
-    createdAt: todayMatchCriteria.createdAt, // Reuse the date range
+  const matchCriteria = {
+    ...userId,
+    createdAt: todayDateRange,
   };
 
-  const overdueAmount = await getAggregateAmount(
-    user,
-    overdueMatchCriteria,
-    '$penalty',
-  );
+  // Fetch both amounts in parallel to optimize time
+  const [todayCollectionAmount, overdueAmount] = await Promise.all([
+    getAggregateAmount(user, matchCriteria, '$installmentAmount'),
+    getAggregateAmount(
+      user,
+      { ...matchCriteria, status: 'overdue' },
+      '$penalty',
+    ),
+  ]);
 
   return {
     todayCollection: todayCollectionAmount,
@@ -478,28 +499,20 @@ const spokeManagerCount = async (user: TAuthUser) => {
 };
 
 const adminDashboardCount = async (user: TAuthUser) => {
-  const totalCollection = await getAggregateAmount(
-    user,
-    {},
-    '$installmentAmount',
-  );
-
-  const totalOverdue = await getAggregateAmount(
-    user,
-    { status: 'overdue' },
-    '$penalty',
-  );
-
-  const totalApplication = await LoanApplication.countDocuments({});
-  const totalClients = await LeadsAndClientsModel.countDocuments({
-    isClient: true,
-  });
+  // Fetch aggregate amounts and counts in parallel to optimize execution time
+  const [totalCollection, totalOverdue, totalApplication, totalClients] =
+    await Promise.all([
+      getAggregateAmount(user, {}, '$installmentAmount'),
+      getAggregateAmount(user, { status: 'overdue' }, '$penalty'),
+      LoanApplication.countDocuments({}),
+      LeadsAndClientsModel.countDocuments({ isClient: true }),
+    ]);
 
   return {
-    totalCollection: totalCollection,
-    totalOverdue: totalOverdue,
-    totalApplication: totalApplication,
-    totalClients: totalClients,
+    totalCollection,
+    totalOverdue,
+    totalApplication,
+    totalClients,
   };
 };
 
