@@ -58,6 +58,11 @@ const repaymentsSchema = new Schema<TRepayments>(
       required: [true, 'Is confirm is required'],
       default: false,
     },
+    customFields: {
+      type: Map,
+      of: Schema.Types.Mixed, // value can be string, number, date, etc.
+      default: {},
+    },
   },
   {
     timestamps: true,

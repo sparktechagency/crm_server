@@ -18,4 +18,7 @@ export type TRepayments = {
   penalty: number;
   status: 'paid' | 'overdue';
   isConfirm: boolean;
+
+  // custom fields
+  customFields: Map<string, unknown>;
 };
