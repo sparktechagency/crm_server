@@ -58,7 +58,12 @@ router
   )
   .get(
     '/repayments_count',
-    auth(USER_ROLE.spokeManager, USER_ROLE.admin, USER_ROLE.fieldOfficer),
+    auth(
+      USER_ROLE.spokeManager,
+      USER_ROLE.admin,
+      USER_ROLE.fieldOfficer,
+      USER_ROLE.hubManager,
+    ),
     dashboardController.spokeManagerCount,
   )
   .get(

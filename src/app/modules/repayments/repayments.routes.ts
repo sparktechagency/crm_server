@@ -16,7 +16,7 @@ router
   )
   .get(
     '/',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.admin),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.admin, USER_ROLE.hubManager),
     RepaymentsController.getAllRepayments,
   )
   .patch(
@@ -26,7 +26,7 @@ router
   )
   .delete(
     '/delete/:id',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.hubManager),
     RepaymentsController.deleteRepayments,
   );
 
