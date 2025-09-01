@@ -274,6 +274,52 @@ const hubManagerCollectionReport = async (
   return formattedResult;
 };
 
+
+const hubManagerLoanApprovalReport = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  const result = await LoanApplication.aggregate([
+    {
+      $match: {
+        hubId: new mongoose.Types.ObjectId(String(user._id)),
+        hubManagerApproval: { $ne: "pending" },
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: "$hubManagerApproval",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Check if there is any result, otherwise set defaults
+  const totalApplications = result.reduce((sum, item) => sum + item.count, 0);
+  const statuses = ['approved', 'rejected'];
+  const percentages = statuses.map(status => {
+    const statusItem = result.find(item => item._id === status);
+    const count = statusItem ? statusItem.count : 0; 
+    const percentage = totalApplications > 0 ? ((count / totalApplications) * 100).toFixed(2) : 0;
+    return {
+      status,
+      count,
+      percentage,
+    };
+  });
+
+
+  return percentages
+}
+
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
@@ -281,4 +327,5 @@ export const dashboardService = {
   supervisorDashboardOverview,
   hubManagerDashboardCount,
   hubManagerCollectionReport,
+  hubManagerLoanApprovalReport
 };

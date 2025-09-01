@@ -35,6 +35,6 @@ router
     '/hub_manager_collection_report',
     auth(USER_ROLE.hubManager),
     dashboardController.hubManagerCollectionReport,
-  );
+  ).get("/hub_manager_loan_approval_report", auth(USER_ROLE.hubManager), dashboardController.hubManagerLoanApprovalReport);
 
 export const DashboardRoutes = router;
