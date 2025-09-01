@@ -33,17 +33,17 @@ router
   )
   .get(
     '/collection_report',
-    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager, USER_ROLE.admin),
     dashboardController.hubManagerCollectionReport,
   )
   .get(
-    '/hub_manager_loan_approval_report',
-    auth(USER_ROLE.hubManager),
+    '/loan_approval_report',
+    auth(USER_ROLE.hubManager, USER_ROLE.admin),
     dashboardController.hubManagerLoanApprovalReport,
   )
   .get(
     '/all_field_officer_collection',
-    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager, USER_ROLE.admin),
     dashboardController.allFieldOfficerCollection,
   )
   .get(

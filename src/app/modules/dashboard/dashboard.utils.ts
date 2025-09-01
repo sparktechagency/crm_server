@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import mongoose from 'mongoose';
-import Repayments from '../repayments/repayments.model';
 import { TAuthUser } from '../../interface/authUser';
+import Repayments from '../repayments/repayments.model';
 
 export const commonPipeline: any[] = [
   {

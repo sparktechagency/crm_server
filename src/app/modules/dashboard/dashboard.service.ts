@@ -227,12 +227,10 @@ const hubManagerCollectionReport = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? {
-          hubId: new mongoose.Types.ObjectId(String(user._id)),
-        }
-      : {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        };
+      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      : user.role === USER_ROLE.spokeManager
+        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        : {};
 
   const result = await Repayments.aggregate([
     {
@@ -294,11 +292,23 @@ const hubManagerLoanApprovalReport = async (
     year as string,
   );
 
+  let commonMatchStage = {};
+
+  if (user.role === USER_ROLE.hubManager) {
+    commonMatchStage = {
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      hubManagerApproval: { $ne: 'pending' },
+    };
+  } else if (user.role === USER_ROLE.admin) {
+    commonMatchStage = {
+      loanStatus: { $ne: 'pending' },
+    };
+  }
+
   const result = await LoanApplication.aggregate([
     {
       $match: {
-        hubId: new mongoose.Types.ObjectId(String(user._id)),
-        hubManagerApproval: { $ne: 'pending' },
+        ...commonMatchStage,
         createdAt: { $gte: startDate, $lte: endDate },
       },
     },
@@ -338,12 +348,10 @@ const allFieldOfficerCollection = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? {
-          hubId: new mongoose.Types.ObjectId(String(user._id)),
-        }
-      : {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        };
+      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      : user.role === USER_ROLE.spokeManager
+        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        : {};
 
   const result = await repaymentQuery
     .customPipeline([
@@ -446,30 +454,25 @@ const allFieldOfficerCollection = async (
 };
 
 const spokeManagerCount = async (user: TAuthUser) => {
-  const todayMatchCriteria = {
+  const todayDateRange = {
+    $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+    $lte: new Date(new Date().setHours(23, 59, 59, 999)),
+  };
+
+  const matchCriteria = {
     spokeId: new mongoose.Types.ObjectId(String(user._id)),
-    createdAt: {
-      $gte: new Date(new Date().setHours(0, 0, 0, 0)),
-      $lte: new Date(new Date().setHours(23, 59, 59, 999)),
-    },
+    createdAt: todayDateRange,
   };
 
-  const todayCollectionAmount = await getAggregateAmount(
-    user,
-    todayMatchCriteria,
-    '$installmentAmount',
-  );
-
-  const overdueMatchCriteria = {
-    status: 'overdue',
-    createdAt: todayMatchCriteria.createdAt, // Reuse the date range
-  };
-
-  const overdueAmount = await getAggregateAmount(
-    user,
-    overdueMatchCriteria,
-    '$penalty',
-  );
+  // Fetch both amounts in parallel to optimize time
+  const [todayCollectionAmount, overdueAmount] = await Promise.all([
+    getAggregateAmount(user, matchCriteria, '$installmentAmount'),
+    getAggregateAmount(
+      user,
+      { ...matchCriteria, status: 'overdue' },
+      '$penalty',
+    ),
+  ]);
 
   return {
     todayCollection: todayCollectionAmount,
@@ -478,28 +481,20 @@ const spokeManagerCount = async (user: TAuthUser) => {
 };
 
 const adminDashboardCount = async (user: TAuthUser) => {
-  const totalCollection = await getAggregateAmount(
-    user,
-    {},
-    '$installmentAmount',
-  );
-
-  const totalOverdue = await getAggregateAmount(
-    user,
-    { status: 'overdue' },
-    '$penalty',
-  );
-
-  const totalApplication = await LoanApplication.countDocuments({});
-  const totalClients = await LeadsAndClientsModel.countDocuments({
-    isClient: true,
-  });
+  // Fetch aggregate amounts and counts in parallel to optimize execution time
+  const [totalCollection, totalOverdue, totalApplication, totalClients] =
+    await Promise.all([
+      getAggregateAmount(user, {}, '$installmentAmount'),
+      getAggregateAmount(user, { status: 'overdue' }, '$penalty'),
+      LoanApplication.countDocuments({}),
+      LeadsAndClientsModel.countDocuments({ isClient: true }),
+    ]);
 
   return {
-    totalCollection: totalCollection,
-    totalOverdue: totalOverdue,
-    totalApplication: totalApplication,
-    totalClients: totalClients,
+    totalCollection,
+    totalOverdue,
+    totalApplication,
+    totalClients,
   };
 };
 
