@@ -1,12 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
+import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
+import { StatisticHelper } from '../../helper/staticsHelper';
 import { TAuthUser } from '../../interface/authUser';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
-import Repayments from '../repayments/repayments.model';
-import { StatisticHelper } from '../../helper/staticsHelper';
-import User from '../user/user.model';
-import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
-import { commonPipeline } from './dashboard.utils';
 import LoanApplication from '../loanApplication/loanApplication.model';
+import Repayments from '../repayments/repayments.model';
+import User from '../user/user.model';
+import { commonPipeline, getAggregateAmount } from './dashboard.utils';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -218,7 +220,287 @@ const hubManagerCollectionReport = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-  return user;
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  const userId =
+    user.role === USER_ROLE.hubManager
+      ? {
+          hubId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        };
+
+  const result = await Repayments.aggregate([
+    {
+      $match: {
+        ...userId,
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: { $month: '$createdAt' },
+        },
+        totalInstallmentAmount: { $sum: '$installmentAmount' },
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $group: {
+        _id: '$_id.month',
+        data: {
+          $push: {
+            totalInstallmentAmount: '$totalInstallmentAmount',
+            count: '$totalInstallmentAmount',
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        month: '$_id',
+        data: 1,
+      },
+    },
+    {
+      $sort: { month: 1 },
+    },
+  ]);
+
+  const formattedResult = StatisticHelper.formattedResult(
+    result,
+    'data',
+    'count',
+  );
+
+  return formattedResult;
+};
+
+const hubManagerLoanApprovalReport = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const { year } = query;
+  const { startDate, endDate } = StatisticHelper.statisticHelper(
+    year as string,
+  );
+
+  const result = await LoanApplication.aggregate([
+    {
+      $match: {
+        hubId: new mongoose.Types.ObjectId(String(user._id)),
+        hubManagerApproval: { $ne: 'pending' },
+        createdAt: { $gte: startDate, $lte: endDate },
+      },
+    },
+    {
+      $group: {
+        _id: '$hubManagerApproval',
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  // Check if there is any result, otherwise set defaults
+  const totalApplications = result.reduce((sum, item) => sum + item.count, 0);
+  const statuses = ['approved', 'rejected'];
+  const percentages = statuses.map((status) => {
+    const statusItem = result.find((item) => item._id === status);
+    const count = statusItem ? statusItem.count : 0;
+    const percentage =
+      totalApplications > 0
+        ? ((count / totalApplications) * 100).toFixed(2)
+        : 0;
+    return {
+      status,
+      count,
+      percentage,
+    };
+  });
+
+  return percentages;
+};
+
+const allFieldOfficerCollection = async (
+  user: TAuthUser,
+  query: Record<string, unknown>,
+) => {
+  const repaymentQuery = new AggregationQueryBuilder(query);
+
+  const userId =
+    user.role === USER_ROLE.hubManager
+      ? {
+          hubId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        };
+
+  const result = await repaymentQuery
+    .customPipeline([
+      {
+        $match: {
+          ...userId,
+        },
+      },
+      {
+        $project: {
+          fieldOfficerId: 1,
+          paidOn: { $dateToString: { format: '%Y-%m-%d', date: '$paidOn' } },
+          installmentAmount: 1,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            fieldOfficerId: '$fieldOfficerId',
+            paidOn: '$paidOn',
+          },
+          totalInstallmentAmount: { $sum: '$installmentAmount' },
+        },
+      },
+      {
+        $group: {
+          _id: '$_id.fieldOfficerId',
+          dates: {
+            $push: {
+              date: '$_id.paidOn',
+              totalInstallmentAmount: '$totalInstallmentAmount',
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'fieldOfficer',
+        },
+      },
+      {
+        $unwind: {
+          path: '$fieldOfficer',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          fieldOfficer: 1,
+          dates: 1,
+        },
+      },
+      {
+        $unwind: '$dates',
+      },
+      {
+        $project: {
+          _id: 0,
+          fieldOfficer: 1,
+          date: '$dates.date',
+          totalInstallmentAmount: '$dates.totalInstallmentAmount',
+        },
+      },
+    ])
+    .filter(['fieldOfficerId', 'paidOn'])
+    .sort()
+    .paginate()
+    .execute(Repayments);
+
+  const meta = await repaymentQuery.countTotal(Repayments);
+
+  // Now merge everything into a single array
+  const mergedData = result.reduce((acc: any, item: any) => {
+    const existing = acc.find(
+      (entry: any) =>
+        entry.fieldOfficer._id.toString() === item.fieldOfficer._id.toString(),
+    );
+
+    if (existing) {
+      existing?.dates?.push({
+        date: item.date,
+        totalInstallmentAmount: item.totalInstallmentAmount,
+      });
+    } else {
+      acc?.push({
+        fieldOfficer: item.fieldOfficer,
+        date: item.date,
+        totalInstallmentAmount: item.totalInstallmentAmount,
+      });
+    }
+
+    return acc;
+  }, []);
+
+  return { meta, result: mergedData };
+};
+
+const spokeManagerCount = async (user: TAuthUser) => {
+  const todayMatchCriteria = {
+    spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    createdAt: {
+      $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+      $lte: new Date(new Date().setHours(23, 59, 59, 999)),
+    },
+  };
+
+  const todayCollectionAmount = await getAggregateAmount(
+    user,
+    todayMatchCriteria,
+    '$installmentAmount',
+  );
+
+  const overdueMatchCriteria = {
+    status: 'overdue',
+    createdAt: todayMatchCriteria.createdAt, // Reuse the date range
+  };
+
+  const overdueAmount = await getAggregateAmount(
+    user,
+    overdueMatchCriteria,
+    '$penalty',
+  );
+
+  return {
+    todayCollection: todayCollectionAmount,
+    overdue: overdueAmount,
+  };
+};
+
+const adminDashboardCount = async (user: TAuthUser) => {
+  const totalCollection = await getAggregateAmount(
+    user,
+    {},
+    '$installmentAmount',
+  );
+
+  const totalOverdue = await getAggregateAmount(
+    user,
+    { status: 'overdue' },
+    '$penalty',
+  );
+
+  const totalApplication = await LoanApplication.countDocuments({});
+  const totalClients = await LeadsAndClientsModel.countDocuments({
+    isClient: true,
+  });
+
+  return {
+    totalCollection: totalCollection,
+    totalOverdue: totalOverdue,
+    totalApplication: totalApplication,
+    totalClients: totalClients,
+  };
 };
 
 export const dashboardService = {
@@ -228,4 +510,8 @@ export const dashboardService = {
   supervisorDashboardOverview,
   hubManagerDashboardCount,
   hubManagerCollectionReport,
+  hubManagerLoanApprovalReport,
+  allFieldOfficerCollection,
+  spokeManagerCount,
+  adminDashboardCount,
 };
