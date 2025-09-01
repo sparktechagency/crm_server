@@ -475,7 +475,9 @@ const spokeManagerCount = async (user: TAuthUser) => {
         ? {
             fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
           }
-        : {};
+        : user.role === USER_ROLE.hubManager
+          ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+          : {};
 
   const matchCriteria = {
     ...userId,
