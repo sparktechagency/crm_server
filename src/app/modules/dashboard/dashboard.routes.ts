@@ -32,8 +32,8 @@ router
     dashboardController.hubManagerDashboardCount,
   )
   .get(
-    '/hub_manager_collection_report',
-    auth(USER_ROLE.hubManager),
+    '/collection_report',
+    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
     dashboardController.hubManagerCollectionReport,
   )
   .get(
@@ -43,8 +43,18 @@ router
   )
   .get(
     '/all_field_officer_collection',
-    auth(USER_ROLE.hubManager),
+    auth(USER_ROLE.hubManager, USER_ROLE.spokeManager),
     dashboardController.allFieldOfficerCollection,
+  )
+  .get(
+    '/spoke_manager_count',
+    auth(USER_ROLE.spokeManager),
+    dashboardController.spokeManagerCount,
+  )
+  .get(
+    '/admin_dashboard_count',
+    auth(USER_ROLE.admin),
+    dashboardController.adminDashboardCount,
   );
 
 export const DashboardRoutes = router;

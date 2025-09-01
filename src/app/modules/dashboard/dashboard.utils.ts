@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import mongoose from 'mongoose';
+import Repayments from '../repayments/repayments.model';
+import { TAuthUser } from '../../interface/authUser';
+
 export const commonPipeline: any[] = [
   {
     $group: {
@@ -32,3 +36,33 @@ export const commonPipeline: any[] = [
     $sort: { month: 1 },
   },
 ];
+
+export const getAggregateAmount = async (
+  user: TAuthUser,
+  matchCriteria: object,
+  sumField: string,
+) => {
+  const result = await Repayments.aggregate([
+    {
+      $match: {
+        ...matchCriteria,
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        amount: {
+          $sum: sumField,
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        amount: 1,
+      },
+    },
+  ]);
+
+  return result.length > 0 ? result[0].amount : 0;
+};

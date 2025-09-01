@@ -106,6 +106,30 @@ const allFieldOfficerCollection = catchAsync(async (req, res) => {
   });
 });
 
+const spokeManagerCount = catchAsync(async (req, res) => {
+  const result = await dashboardService.spokeManagerCount(
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Spoke manager count fetched successfully',
+    data: result,
+  });
+});
+
+const adminDashboardCount = catchAsync(async (req, res) => {
+  const result = await dashboardService.adminDashboardCount(
+    req.user as TAuthUser,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Admin dashboard count fetched successfully',
+    data: result,
+  });
+});
+
 export const dashboardController = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
@@ -115,4 +139,6 @@ export const dashboardController = {
   hubManagerCollectionReport,
   hubManagerLoanApprovalReport,
   allFieldOfficerCollection,
+  spokeManagerCount,
+  adminDashboardCount,
 };

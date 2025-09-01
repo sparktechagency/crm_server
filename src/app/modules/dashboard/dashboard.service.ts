@@ -7,7 +7,7 @@ import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import Repayments from '../repayments/repayments.model';
 import User from '../user/user.model';
-import { commonPipeline } from './dashboard.utils';
+import { commonPipeline, getAggregateAmount } from './dashboard.utils';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
@@ -225,10 +225,19 @@ const hubManagerCollectionReport = async (
     year as string,
   );
 
+  const userId =
+    user.role === USER_ROLE.hubManager
+      ? {
+          hubId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        };
+
   const result = await Repayments.aggregate([
     {
       $match: {
-        hubId: new mongoose.Types.ObjectId(String(user._id)),
+        ...userId,
         createdAt: {
           $gte: startDate,
           $lte: endDate,
@@ -327,11 +336,20 @@ const allFieldOfficerCollection = async (
 ) => {
   const repaymentQuery = new AggregationQueryBuilder(query);
 
+  const userId =
+    user.role === USER_ROLE.hubManager
+      ? {
+          hubId: new mongoose.Types.ObjectId(String(user._id)),
+        }
+      : {
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        };
+
   const result = await repaymentQuery
     .customPipeline([
       {
         $match: {
-          hubId: new mongoose.Types.ObjectId(String(user._id)),
+          ...userId,
         },
       },
       {
@@ -409,12 +427,12 @@ const allFieldOfficerCollection = async (
     );
 
     if (existing) {
-      existing.dates.push({
+      existing?.dates?.push({
         date: item.date,
         totalInstallmentAmount: item.totalInstallmentAmount,
       });
     } else {
-      acc.push({
+      acc?.push({
         fieldOfficer: item.fieldOfficer,
         date: item.date,
         totalInstallmentAmount: item.totalInstallmentAmount,
@@ -427,6 +445,64 @@ const allFieldOfficerCollection = async (
   return { meta, result: mergedData };
 };
 
+const spokeManagerCount = async (user: TAuthUser) => {
+  const todayMatchCriteria = {
+    spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    createdAt: {
+      $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+      $lte: new Date(new Date().setHours(23, 59, 59, 999)),
+    },
+  };
+
+  const todayCollectionAmount = await getAggregateAmount(
+    user,
+    todayMatchCriteria,
+    '$installmentAmount',
+  );
+
+  const overdueMatchCriteria = {
+    status: 'overdue',
+    createdAt: todayMatchCriteria.createdAt, // Reuse the date range
+  };
+
+  const overdueAmount = await getAggregateAmount(
+    user,
+    overdueMatchCriteria,
+    '$penalty',
+  );
+
+  return {
+    todayCollection: todayCollectionAmount,
+    overdue: overdueAmount,
+  };
+};
+
+const adminDashboardCount = async (user: TAuthUser) => {
+  const totalCollection = await getAggregateAmount(
+    user,
+    {},
+    '$installmentAmount',
+  );
+
+  const totalOverdue = await getAggregateAmount(
+    user,
+    { status: 'overdue' },
+    '$penalty',
+  );
+
+  const totalApplication = await LoanApplication.countDocuments({});
+  const totalClients = await LeadsAndClientsModel.countDocuments({
+    isClient: true,
+  });
+
+  return {
+    totalCollection: totalCollection,
+    totalOverdue: totalOverdue,
+    totalApplication: totalApplication,
+    totalClients: totalClients,
+  };
+};
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
@@ -436,4 +512,6 @@ export const dashboardService = {
   hubManagerCollectionReport,
   hubManagerLoanApprovalReport,
   allFieldOfficerCollection,
+  spokeManagerCount,
+  adminDashboardCount,
 };
