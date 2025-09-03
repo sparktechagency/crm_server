@@ -12,6 +12,8 @@ import { TRepayments } from './repayments.interface';
 import Repayments from './repayments.model';
 import { calculatePenalty, findClientAndLoan } from './repayments.utils';
 import { USER_ROLE } from '../../constant';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import sendNotification from '../../../socket/sendNotification';
 
 const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
   const { month, ...rest } = payload;
@@ -67,6 +69,17 @@ const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
       { new: true },
     ),
   ]);
+
+  const notificationData = {
+    type: NOTIFICATION_TYPE.REPAYMENT,
+    senderId: user._id,
+    receiverId: user.adminId,
+    linkId: result._id,
+    role: user.role,
+    message: `${user.customFields.name} has added a new repayment`,
+  };
+
+  await sendNotification(user, notificationData);
 
   return result;
 };

@@ -18,7 +18,7 @@ router
       { name: 'cv', maxCount: 1 },
     ]),
     parseFormData,
-    UserController.createFieldOfficer,
+    UserController.createUsers,
   )
   .get(
     '/',

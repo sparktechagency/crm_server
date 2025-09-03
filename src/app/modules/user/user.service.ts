@@ -11,16 +11,21 @@ import sendMail from '../../utils/sendMail';
 import User from './user.model';
 import { findUserWithUid, uidForUserRole } from './user.utils';
 import { minuteToSecond } from '../../utils/minitToSecond';
-import { TUser } from './user.interface';
+import { TFindUserWithUid, TUser } from './user.interface';
 import { TMeta } from '../../utils/sendResponse';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import sendNotification from '../../../socket/sendNotification';
 
-const createUsers = async (payload: Record<string, unknown>) => {
+const createUsers = async (
+  payload: Record<string, unknown>,
+  user: TAuthUser,
+) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
   const { email, phoneNumber, role, spokeUid, hubUid, ...rest } = payload;
 
   const uidKey = uidForUserRole(payload.role as string);
   const uid = hubUid ? hubUid : spokeUid;
-  const data = await findUserWithUid(uid as string);
+  const data = (await findUserWithUid(uid as string)) as TFindUserWithUid;
 
   const userData = {
     uid: await generateUID(User, uidKey),
@@ -43,6 +48,30 @@ const createUsers = async (payload: Record<string, unknown>) => {
   });
 
   const createUser = await User.create(userData);
+
+  let receiverIds: any;
+  if (role === USER_ROLE.fieldOfficer) {
+    receiverIds = [user.adminId, data?.hubId, data?.spokeId];
+  } else if (role === USER_ROLE.spokeManager) {
+    receiverIds = [user.adminId, data.hubId];
+  } else if (role === USER_ROLE.hubManager) {
+    receiverIds = [user.adminId];
+  }
+
+  await Promise.all(
+    receiverIds.map(async (id: string) => {
+      const notificationData = {
+        type: NOTIFICATION_TYPE.NEW_LEAD_ADDED,
+        senderId: user._id,
+        receiverId: id,
+        linkId: createUser._id,
+        role: user.role,
+        message: `${user.customFields.name} has added a new lead`,
+      };
+
+      await sendNotification(user, notificationData);
+    }),
+  );
   return createUser;
 };
 

@@ -5,7 +5,7 @@ import { UserService } from './user.service';
 import { TAuthUser } from '../../interface/authUser';
 import { MulterFile } from '../../utils/uploadImage';
 
-const createFieldOfficer = catchAsync(async (req, res) => {
+const createUsers = catchAsync(async (req, res) => {
   const fields = ['image', 'cv'];
 
   const files = req.files as { [fieldname: string]: MulterFile[] };
@@ -16,7 +16,7 @@ const createFieldOfficer = catchAsync(async (req, res) => {
     }
   }
 
-  const result = await UserService.createUsers(req.body);
+  const result = await UserService.createUsers(req.body, req.user as TAuthUser);
 
   sendResponse(res, {
     success: true,
@@ -127,7 +127,7 @@ const getFieldOfficerRecord = catchAsync(async (req, res) => {
 
 export const UserController = {
   updateUserActions,
-  createFieldOfficer,
+  createUsers,
   getUsersBaseOnRole,
   assignSpoke,
   updateUsers,
