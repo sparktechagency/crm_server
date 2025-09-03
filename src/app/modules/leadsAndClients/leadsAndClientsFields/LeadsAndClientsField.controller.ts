@@ -9,7 +9,7 @@ const addLeadsAndClientsField = catchAsync(async (req, res) => {
   );
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     message: 'Leads field added successfully',
     data: result,
   });
@@ -26,9 +26,7 @@ const getLeadsAndClientsFields = catchAsync(async (req, res) => {
 });
 
 const updateLeadsAndClientsField = catchAsync(async (req, res) => {
-  const { id } = req.params;
   const result = await LeadsAndClientsFieldService.updateLeadsAndClientsField(
-    id,
     req.body,
   );
   sendResponse(res, {
