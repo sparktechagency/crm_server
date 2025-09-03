@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { LeadsAndClientsFieldController } from './LeadsAndClientsField.controller';
-import { auth } from '../../../middleware/auth';
-import { USER_ROLE } from '../../../constant';
 import {
-  CreateFieldSchema,
-  UpdateFieldSchema,
+  CreateFieldSchema
 } from '../../../../shared/validation/commonZodValidation';
+import { USER_ROLE } from '../../../constant';
+import { auth } from '../../../middleware/auth';
 import validateRequest from '../../../middleware/validation';
+import { LeadsAndClientsFieldController } from './LeadsAndClientsField.controller';
 
 const router = Router();
 
@@ -23,9 +22,8 @@ router
     LeadsAndClientsFieldController.getLeadsAndClientsFields,
   )
   .patch(
-    '/:id',
+    '/',
     auth(USER_ROLE.admin),
-    validateRequest(UpdateFieldSchema),
     LeadsAndClientsFieldController.updateLeadsAndClientsField,
   )
   .delete(
