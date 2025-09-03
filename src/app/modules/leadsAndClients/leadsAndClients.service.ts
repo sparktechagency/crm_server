@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import mongoose from 'mongoose';
 import { cacheData, deleteCache, getCachedData } from '../../../redis';
 import { TAuthUser } from '../../interface/authUser';
@@ -16,6 +17,8 @@ import { USER_ROLE } from '../../constant';
 import { transactionWrapper } from '../../utils/transactionWrapper';
 import httpStatus from 'http-status';
 import AppError from '../../utils/AppError';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import sendNotification from '../../../socket/sendNotification';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
@@ -26,7 +29,7 @@ const createLeadsAndClients = async (
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
-    uid: await generateUID(LeadsAndClientsModel, 'ID'),
+    uid: await generateUID(LeadsAndClientsModel as any, 'ID'),
     email,
     phoneNumber,
     hubId: user.hubId,
@@ -50,6 +53,24 @@ const createLeadsAndClients = async (
   }
 
   await deleteCache(cacheKey);
+
+  const receiverId = [user.hubId, user.spokeId, user.adminId];
+
+  // Send notifications and wait for all to be completed
+  await Promise.all(
+    receiverId.map(async (id) => {
+      const notificationData = {
+        type: NOTIFICATION_TYPE.NEW_LEAD_ADDED,
+        senderId: user._id,
+        receiverId: id,
+        linkId: result._id,
+        role: user.role,
+        message: `${user.customFields.name} has added a new lead`,
+      };
+
+      await sendNotification(user, notificationData);
+    }),
+  );
 
   return result;
 };

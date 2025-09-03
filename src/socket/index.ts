@@ -7,7 +7,7 @@ import config from '../config'; // Ensure jwtSecret is defined in config
 
 export interface IConnectedUser {
   socketId: string;
-  userId: string; // You can add other properties that `connectUser` may have
+  _id: string; // You can add other properties that `connectUser` may have
 }
 export const connectedUser: Map<string, object> = new Map();
 
@@ -33,9 +33,11 @@ const socketIO = (io: Server) => {
         token,
         config.jwt.access_token as Secret,
       ) as JwtPayload;
-      activeUsers[socket.id] = user.userId;
-      socket.user = { userId: user.userId, socketId: socket.id };
+
+      activeUsers[socket.id] = user._id;
+      socket.user = { userId: user._id, socketId: socket.id };
       // Attach user info to the socket object
+
       if (
         socket.user.userId === undefined ||
         socket.user.socketId === undefined
@@ -64,7 +66,7 @@ const socketIO = (io: Server) => {
       console.log('userId or socketId is undefined');
       return;
     }
-    connectedUser.set(socket.user.userId, { socketId: socket.user.socketId });
+    connectedUser.set(socket.user.userId, { socketId: socket?.user?.socketId });
 
     socket.on('disconnect', () => {
       // eslint-disable-next-line no-console
@@ -73,13 +75,13 @@ const socketIO = (io: Server) => {
       delete activeUsers[socket.id];
       if (
         socket?.user?.userId === undefined ||
-        socket.user.socketId === undefined
+        socket?.user?.socketId === undefined
       ) {
         // eslint-disable-next-line no-console
         console.log('userId or socketId is undefined');
         return;
       }
-      connectedUser.delete(socket.user.userId);
+      connectedUser.delete(socket?.user?.userId);
     });
 
     socket.on('error', (err) => {

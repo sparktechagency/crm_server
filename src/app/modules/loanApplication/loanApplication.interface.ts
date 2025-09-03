@@ -10,6 +10,7 @@ export interface IRepaymentsDates {
 }
 
 export type TLoanApplication = {
+  _id?: string;
   // common
   clientId: ObjectId;
   hubId: ObjectId;

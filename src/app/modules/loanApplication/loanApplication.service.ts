@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TAuthUser } from '../../interface/authUser';
 import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
@@ -17,6 +18,10 @@ import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import AppError from '../../utils/AppError';
 import httpStatus from 'http-status';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import sendNotification from '../../../socket/sendNotification';
+import cron from 'node-cron';
+import User from '../user/user.model';
 
 const createLoanApplication = async (
   user: TAuthUser,
@@ -84,6 +89,24 @@ const createLoanApplication = async (
       },
       { isClient: true },
       { session },
+    );
+
+    const receiverId = [user.hubId, user.spokeId];
+
+    // Send notifications and wait for all to be completed
+    await Promise.all(
+      receiverId.map(async (id) => {
+        const notificationData = {
+          type: NOTIFICATION_TYPE.NEW_APPLICATION_ADDED,
+          senderId: user._id,
+          receiverId: id,
+          linkId: loanApplication[0]._id,
+          role: user.role,
+          message: `${user.customFields.name} has added a new loan application`,
+        };
+
+        await sendNotification(user, notificationData);
+      }),
     );
 
     // ✅ Commit transaction
@@ -220,6 +243,60 @@ const deleteLoanApplication = async (id: string, user: TAuthUser) => {
 
   return result;
 };
+
+// Function to send notification to the field officer
+const sendLoanStartNotification = async (loan: TLoanApplication) => {
+  const admin = await User.findOne({ role: USER_ROLE.admin });
+
+  try {
+    const notificationData = {
+      type: NOTIFICATION_TYPE.LOAN_REMINDER,
+      senderId: admin?._id,
+      receiverId: loan.fieldOfficerId,
+      linkId: loan._id,
+      role: USER_ROLE.admin,
+      message: `The loan with ID ${loan.uid} is about to start tomorrow. Please review the details.`,
+    };
+
+    // Send the notification (You can use your existing sendNotification function)
+    await sendNotification(
+      {
+        _id: admin?._id as any,
+      },
+      notificationData,
+    );
+    console.log(`Notification sent to field officer ${loan.fieldOfficerId}`);
+  } catch (error) {
+    console.error('Error sending loan start notification:', error);
+  }
+};
+
+// Cron job to check the loans every day at 12 AM
+cron.schedule('0 0 * * *', async () => {
+  try {
+    console.log('Node corn job running..........');
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    // Find loans where the startDate is tomorrow
+    const loans = await LoanApplication.find({
+      startDate: {
+        $gte: tomorrow,
+        $lt: new Date(tomorrow.getTime() + 86400000), // Get all loans starting tomorrow
+      },
+    });
+
+    // Send notification for each loan
+    for (const loan of loans) {
+      await sendLoanStartNotification(loan);
+    }
+  } catch (error) {
+    console.error('Error in cron job:', error);
+  }
+});
 
 export const LoanApplicationService = {
   createLoanApplication,

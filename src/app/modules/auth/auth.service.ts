@@ -4,7 +4,7 @@ import { JwtPayload, Secret } from 'jsonwebtoken';
 import config from '../../../config';
 import { emailVerifyHtml } from '../../../shared/html/emailVerifyHtml';
 import { forgotPasswordHtml } from '../../../shared/html/forgotPasswordHtml';
-import { USER_STATUS } from '../../constant';
+import { USER_ROLE, USER_STATUS } from '../../constant';
 import AppError from '../../utils/AppError';
 import { decodeToken } from '../../utils/decodeToken';
 import generateToken from '../../utils/generateToken';
@@ -12,40 +12,6 @@ import { isMatchedPassword } from '../../utils/matchPassword';
 import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
-
-// const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
-//   const { email, password } = payload;
-//   // Step 1: Find user with password
-//   const user = await User.findOne({ email }).select('+password');
-//   const userWithoutPassword = await User.findOne({ email }).select('-password');
-//   if (!user) {
-//     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
-//   }
-
-//   // Step 2: Validate user status
-//   if (user.isDeleted) {
-//     throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted!');
-//   }
-
-//   if (user.status === USER_STATUS.blocked) {
-//     throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked!');
-//   }
-
-//   // Step 3: Check password
-//   const isPasswordValid = await isMatchedPassword(password, user.password);
-//   if (!isPasswordValid) {
-//     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
-//   }
-
-//   // Step 4: Generate token
-//   const tokenGenerate = generateToken(
-//     { ...(userWithoutPassword as any)._doc },
-//     config.jwt.access_token as Secret,
-//     config.jwt.access_expires_in as string,
-//   );
-
-//   return { accessToken: tokenGenerate };
-// };
 
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
@@ -75,14 +41,20 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
   const { password: _, ...userData } = user.toObject();
 
+  const admin = await User.findOne({ role: USER_ROLE.admin });
+  const tokenData = {
+    adminId: admin?._id,
+    ...userData,
+  };
+
   // Step 5: Generate token
   const accessToken = generateToken(
-    userData,
+    tokenData,
     config.jwt.access_token as Secret,
     config.jwt.access_expires_in as string,
   );
 
-  return { accessToken };
+  return { accessToken, user: userData };
 };
 
 const forgotPassword = async (email: string) => {
