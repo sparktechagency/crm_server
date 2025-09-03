@@ -1,6 +1,7 @@
 import { Model, ObjectId } from 'mongoose';
 
 export type LeadsAndClients = {
+  _id?: string;
   uid: string;
   hubId: ObjectId;
   spokeId: ObjectId;
@@ -13,7 +14,7 @@ export type LeadsAndClients = {
 };
 
 export interface IReturnTypeLeadsAndClients extends LeadsAndClients {
-  _id: string;
+  // _id: string;
   createdAt: Date;
   updatedAt: Date;
   __v: number;

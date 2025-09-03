@@ -20,4 +20,5 @@ export type TAuthUser = {
   spokeUid?: string;
   iat: number;
   exp: number;
+  adminId: string;
 };

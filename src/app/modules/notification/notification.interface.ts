@@ -1,33 +1,18 @@
 import { ObjectId } from 'mongoose';
 
 type TType =
-  | 'job-request'
-  | 'job'
-  | 'review'
-  | 'payment'
-  | 'company'
-  | 'dispatcher'
-  | 'driver'
-  | 'approve'
-  | 'company_request'
-  | 'driver_request'
-  | 'job_schedule'
-  | 'payment_confirm';
+  | 'new_lead_added'
+  | 'new_application_added'
+  | 'loan_reminder'
+  | 'user_created'
+  | 'repayment';
 
 export const NOTIFICATION_TYPE = {
-  jobRequest: 'job-request',
-  job: 'job',
-  review: 'review',
-  payment: 'payment',
-  company: 'company',
-  dispatcher: 'dispatcher',
-  driver: 'driver',
-  approve: 'approve',
-  companyRequest: 'company_request',
-  driverRequest: 'driver_request',
-  jobSchedule: 'job_schedule',
-  jobPayment: 'job_payment',
-  paymentConfirm: 'payment_confirm',
+  NEW_LEAD_ADDED: 'new_lead_added',
+  NEW_APPLICATION_ADDED: 'new_application_added',
+  LOAN_REMINDER: 'loan_reminder',
+  USER_CREATED: 'user_created',
+  REPAYMENT: 'repayment',
 } as const;
 
 export type TNotification = {

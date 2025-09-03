@@ -31,6 +31,11 @@ export type TUser = {
   customFields: Map<string, unknown>;
 };
 
+export type TFindUserWithUid = {
+  hubId?: string;
+  spokeId?: string;
+};
+
 export interface UserModel extends Model<TUser> {
   isUserExist(id: string): Promise<TUser>;
   isMatchedPassword(password: string, hashPassword: string): Promise<boolean>;

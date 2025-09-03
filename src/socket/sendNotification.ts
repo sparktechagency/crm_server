@@ -21,7 +21,7 @@ const sendNotification = async (
     console.log(payload, 'payload ========>');
     const notificationData = {
       ...payload,
-      senderId: user.userId,
+      senderId: user._id,
       receiverId: receiverId,
       count: unreadNotification + 1,
     };
