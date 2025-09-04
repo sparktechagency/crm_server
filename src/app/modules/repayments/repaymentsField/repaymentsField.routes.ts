@@ -18,9 +18,9 @@ router
     RepaymentsFieldController.addUserField,
   )
   .get(
-    '/get_users_fields',
+    '/',
     auth(USER_ROLE.admin),
-    RepaymentsFieldController.getUsersFields,
+    RepaymentsFieldController.getRepaymentsField,
   )
   .patch(
     '/update_field/:id',

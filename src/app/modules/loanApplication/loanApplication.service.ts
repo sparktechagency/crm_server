@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TAuthUser } from '../../interface/authUser';
-import QueryBuilder from '../../QueryBuilder/queryBuilder';
 import generateUID from '../../utils/generateUID';
 import { IReturnTypeLeadsAndClients } from '../leadsAndClients/leadsAndClients.interface';
 import { LeadsAndClientsService } from '../leadsAndClients/leadsAndClients.service';
@@ -10,18 +9,19 @@ import {
 } from './loanApplication.interface';
 import LoanApplication from './loanApplication.model';
 
+import httpStatus from 'http-status';
 import mongoose from 'mongoose';
+import cron from 'node-cron';
+import sendNotification from '../../../socket/sendNotification';
+import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import AppError from '../../utils/AppError';
+import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import { TLocationProfile } from '../locationProfile/locationProfile.interface';
 import LocationProfile from '../locationProfile/locationProfile.model';
-import { installmentAmountCalculator } from './loanApplication.utils';
-import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
-import AppError from '../../utils/AppError';
-import httpStatus from 'http-status';
-import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
-import cron from 'node-cron';
 import User from '../user/user.model';
+import { installmentAmountCalculator } from './loanApplication.utils';
 
 const createLoanApplication = async (
   user: TAuthUser,
@@ -151,19 +151,53 @@ const getAllLoanApplication = async (
     matchStage = {};
   }
 
-  const loanApplicationQuery = new QueryBuilder(
-    LoanApplication.find({ ...matchStage }).populate('clientId'),
-    query,
-  )
-    .search(['name', 'email', 'phoneNumber'])
-    .sort()
-    .paginate()
-    .filter(['supervisorApproval']);
+
+  console.log(query, "query ===========>");
+
+
+  const loanApplicationQuery = new AggregationQueryBuilder(query)
+
+
+
+
+  // const loanApplicationQuery = new QueryBuilder(
+  //   LoanApplication.find({ ...matchStage }).populate('clientId'),
+  //   query,
+  // )
+  //   .search(['clientId.customFields.name', 'email', 'uid'])
+  //   .sort()
+  //   .paginate()
+  //   .filter(['supervisorApproval']);
 
   const [result, meta] = await Promise.all([
-    loanApplicationQuery.queryModel,
-    loanApplicationQuery.countTotal(),
+    loanApplicationQuery
+      .customPipeline([
+        {
+          $match: { ...matchStage }
+        },
+        {
+          $lookup: {
+            from: 'leadsandclients',
+            localField: 'clientId',
+            foreignField: '_id',
+            as: 'clientId',
+          },
+        },
+        {
+          $unwind: {
+            path: '$clientId',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ])
+      .search(['clientId.customFields.name', 'email', 'phoneNumber'])
+      .sort()
+      .paginate()
+      .execute(LoanApplication),
+
+    loanApplicationQuery.countTotal(LoanApplication),
   ]);
+
 
   return { meta, result };
 };

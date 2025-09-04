@@ -90,13 +90,13 @@ const getAllRepayments = async (
 ) => {
   const repaymentQuery = new AggregationQueryBuilder(query);
 
-  const cacheKey = `getAllRepayments-${user._id}`;
+  const cacheKey = `getAllRepayments-${user._id}-${JSON.stringify(query)}`;
   const cached = await getCachedData<{ meta: TMeta; result: TRepayments[] }>(
     cacheKey,
   );
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    return cached;
+    // return cached;
   }
 
   let matchStage = {};
@@ -133,6 +133,20 @@ const getAllRepayments = async (
       {
         $unwind: {
           path: '$client',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'loanapplications',
+          localField: 'applicationId',
+          foreignField: '_id',
+          as: 'loan',
+        },
+      },
+      {
+        $unwind: {
+          path: '$loan',
           preserveNullAndEmptyArrays: true,
         },
       },

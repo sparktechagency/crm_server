@@ -7,14 +7,14 @@ const addUserField = catchAsync(async (req, res) => {
   const result = await RepaymentsFieldService.addRepayments(req.body);
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     message: 'User field added successfully',
     data: result,
   });
 });
 
-const getUsersFields = catchAsync(async (req, res) => {
-  const result = await RepaymentsFieldService.getUsersFields();
+const getRepaymentsField = catchAsync(async (req, res) => {
+  const result = await RepaymentsFieldService.getRepaymentsField();
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
@@ -47,7 +47,7 @@ const deleteUserField = catchAsync(async (req, res) => {
 
 export const RepaymentsFieldController = {
   addUserField,
-  getUsersFields,
+  getRepaymentsField,
   updateUserField,
   deleteUserField,
 };
