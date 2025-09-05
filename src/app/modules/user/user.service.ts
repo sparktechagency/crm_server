@@ -15,6 +15,7 @@ import { TFindUserWithUid, TUser } from './user.interface';
 import { TMeta } from '../../utils/sendResponse';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import sendNotification from '../../../socket/sendNotification';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 
 const createUsers = async (
   payload: Record<string, unknown>,
@@ -56,6 +57,10 @@ const createUsers = async (
     receiverIds = [user.adminId, data.hubId];
   } else if (role === USER_ROLE.hubManager) {
     receiverIds = [user.adminId];
+  } 
+
+  if (user.role === USER_ROLE.admin) {
+    return createUser;
   }
 
   await Promise.all(
@@ -118,7 +123,7 @@ const getUsersBaseOnRole = async (
   const cached = await getCachedData<{ result: TUser[] }>(cacheKey);
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    return cached;
+    // return cached;
   }
 
   // Build match stage dynamically
@@ -129,18 +134,26 @@ const getUsersBaseOnRole = async (
         ? { spokeId: user._id }
         : {};
 
-  const userQuery = new QueryBuilder(User.find({ ...matchStage, role }), query)
-    .search(['customFields.name', 'email', 'phoneNumber'])
-    .sort()
-    .paginate()
-    .filter(['status']);
+  const userQuery = new AggregationQueryBuilder(query)
 
-  // Run both queries in parallel (faster than awaiting sequentially)
   const [result, meta] = await Promise.all([
-    userQuery.queryModel,
-    userQuery.countTotal(),
-  ]);
+    userQuery
+      .customPipeline([
+        {
+          $match: {
+            ...matchStage,
+            role
+          },
+        },
+      ])
+      .search(['customFields.name', 'email', 'phoneNumber'])
+      .sort()
+      .paginate()
+      .filter(['status', 'role'])
+      .execute(User),
 
+    userQuery.countTotal(User),
+  ]);
   const time = minuteToSecond(5);
   await cacheData(cacheKey, { meta, result }, time);
 
@@ -208,23 +221,27 @@ const getAllManagers = async (
   );
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    return cached;
+    // return cached;
   }
 
-  const managersQuery = new QueryBuilder(
-    User.find({
-      $or: [{ role: USER_ROLE.hubManager }, { role: USER_ROLE.spokeManager }],
-    }),
-    query,
-  )
-    .search(['customFields.name', 'email', 'phoneNumber'])
-    .sort()
-    .paginate()
-    .filter(['status', 'role']);
+  const managersQuery = new AggregationQueryBuilder(query)
 
   const [result, meta] = await Promise.all([
-    managersQuery.queryModel,
-    managersQuery.countTotal(),
+    managersQuery
+      .customPipeline([
+        {
+          $match: {
+            $or: [{ role: USER_ROLE.hubManager }, { role: USER_ROLE.spokeManager }],
+          },
+        },
+      ])
+      .search(['customFields.name', 'email', 'phoneNumber'])
+      .sort()
+      .paginate()
+      .filter(['status', 'role'])
+      .execute(User),
+
+    managersQuery.countTotal(User),
   ]);
 
   const time = minuteToSecond(5);

@@ -11,7 +11,7 @@ const createLocationProfile = catchAsync(async (req, res) => {
   );
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     message: 'Location profile created successfully',
     data: result,
   });

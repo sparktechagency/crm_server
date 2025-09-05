@@ -79,7 +79,7 @@ const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
-  const cacheKey = `leadsAndClients::${user._id}`;
+  const cacheKey = `leadsAndClients::${user._id}-${JSON.stringify(query)}`;
 
   // Try to fetch from Redis cache first
   const cached = await getCachedData<{
@@ -122,6 +122,7 @@ const getAllLeadsAndClients = async (
     leadsQuery.queryModel,
     leadsQuery.countTotal(),
   ]);
+
 
   const time = minuteToSecond(10);
   // Store in Redis cache
@@ -262,11 +263,13 @@ const deleteClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
+
   const result = transactionWrapper(async (session) => {
     const client = await LeadsAndClientsModel.findOneAndDelete(
       { _id: id },
       { session },
     );
+
     if (!client)
       throw new AppError(
         httpStatus.BAD_REQUEST,

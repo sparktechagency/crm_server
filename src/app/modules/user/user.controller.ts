@@ -21,7 +21,7 @@ const createUsers = catchAsync(async (req, res) => {
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
-    message: 'Field officer created successfully',
+    message: 'User created successfully',
     data: result,
   });
 });

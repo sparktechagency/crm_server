@@ -24,8 +24,7 @@ const getUsersFields = catchAsync(async (req, res) => {
 });
 
 const updateUserField = catchAsync(async (req, res) => {
-  const { id } = req.params;
-  const result = await UserFieldService.updateUserField(id, req.body);
+  const result = await UserFieldService.updateUserField(req.body);
   sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
