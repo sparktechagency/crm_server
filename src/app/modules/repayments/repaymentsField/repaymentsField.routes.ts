@@ -23,13 +23,13 @@ router
     RepaymentsFieldController.getRepaymentsField,
   )
   .patch(
-    '/update_field/:id',
+    '/',
     auth(USER_ROLE.admin),
     validateRequest(UpdateFieldSchema),
     RepaymentsFieldController.updateUserField,
   )
   .delete(
-    '/delete_field/:id',
+    '/:id',
     auth(USER_ROLE.admin),
     RepaymentsFieldController.deleteUserField,
   );

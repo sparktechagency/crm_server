@@ -1,12 +1,11 @@
 import { Router } from 'express';
-import { UserFieldController } from './user.field.controller';
-import { auth } from '../../../middleware/auth';
-import { USER_ROLE } from '../../../constant';
-import validateRequest from '../../../middleware/validation';
 import {
-  CreateFieldSchema,
-  UpdateFieldSchema,
+  CreateFieldSchema
 } from '../../../../shared/validation/commonZodValidation';
+import { USER_ROLE } from '../../../constant';
+import { auth } from '../../../middleware/auth';
+import validateRequest from '../../../middleware/validation';
+import { UserFieldController } from './user.field.controller';
 
 const router = Router();
 
@@ -23,9 +22,9 @@ router
     UserFieldController.getUsersFields,
   )
   .patch(
-    '/update_field/:id',
+    '/update_field',
     auth(USER_ROLE.admin),
-    validateRequest(UpdateFieldSchema),
+    // validateRequest(UpdateFieldSchema),
     UserFieldController.updateUserField,
   )
   .delete(

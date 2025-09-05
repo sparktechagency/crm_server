@@ -2,7 +2,7 @@ import { TFieldInterface } from '../../../../shared/validation/commonZodValidati
 import { LeadsAndClientsField } from './leadsAndClients.model';
 
 
-type DataEntry = {
+export type DataEntry = {
   label: string;
   inputName: string;
   inputType: string;
