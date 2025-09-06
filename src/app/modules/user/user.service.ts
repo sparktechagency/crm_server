@@ -57,7 +57,7 @@ const createUsers = async (
     receiverIds = [user.adminId, data.hubId];
   } else if (role === USER_ROLE.hubManager) {
     receiverIds = [user.adminId];
-  } 
+  }
 
   if (user.role === USER_ROLE.admin) {
     return createUser;
@@ -134,7 +134,7 @@ const getUsersBaseOnRole = async (
         ? { spokeId: user._id }
         : {};
 
-  const userQuery = new AggregationQueryBuilder(query)
+  const userQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
     userQuery
@@ -142,7 +142,7 @@ const getUsersBaseOnRole = async (
         {
           $match: {
             ...matchStage,
-            role
+            role,
           },
         },
       ])
@@ -224,14 +224,17 @@ const getAllManagers = async (
     // return cached;
   }
 
-  const managersQuery = new AggregationQueryBuilder(query)
+  const managersQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
     managersQuery
       .customPipeline([
         {
           $match: {
-            $or: [{ role: USER_ROLE.hubManager }, { role: USER_ROLE.spokeManager }],
+            $or: [
+              { role: USER_ROLE.hubManager },
+              { role: USER_ROLE.spokeManager },
+            ],
           },
         },
       ])
@@ -257,6 +260,34 @@ const getFieldOfficerRecord = async (
   return user;
 };
 
+const getProfile = async (user: TAuthUser) => {
+  const result = await User.findById(user._id);
+
+  return result;
+};
+
+const updateProfile = async (
+  user: TAuthUser,
+  payload: Record<string, unknown>,
+) => {
+  const { phoneNumber, ...rest } = payload;
+
+  const updateQuery: Record<string, any> = {};
+  for (const key in rest) {
+    updateQuery[`customFields.${key}`] = rest[key];
+  }
+
+  const userData = {
+    phoneNumber,
+    ...updateQuery,
+  };
+
+  const result = await User.findByIdAndUpdate(user._id, userData, {
+    new: true,
+  });
+  return result;
+};
+
 export const UserService = {
   updateUserActions,
   createUsers,
@@ -266,4 +297,6 @@ export const UserService = {
   deleteUsers,
   getAllManagers,
   getFieldOfficerRecord,
+  getProfile,
+  updateProfile,
 };

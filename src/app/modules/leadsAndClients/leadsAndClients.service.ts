@@ -123,7 +123,6 @@ const getAllLeadsAndClients = async (
     leadsQuery.countTotal(),
   ]);
 
-
   const time = minuteToSecond(10);
   // Store in Redis cache
   await cacheData(cacheKey, { meta, result }, time);
@@ -263,7 +262,6 @@ const deleteClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-
   const result = transactionWrapper(async (session) => {
     const client = await LeadsAndClientsModel.findOneAndDelete(
       { _id: id },

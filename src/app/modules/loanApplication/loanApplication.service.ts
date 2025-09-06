@@ -151,14 +151,9 @@ const getAllLoanApplication = async (
     matchStage = {};
   }
 
+  console.log(query, 'query ===========>');
 
-  console.log(query, "query ===========>");
-
-
-  const loanApplicationQuery = new AggregationQueryBuilder(query)
-
-
-
+  const loanApplicationQuery = new AggregationQueryBuilder(query);
 
   // const loanApplicationQuery = new QueryBuilder(
   //   LoanApplication.find({ ...matchStage }).populate('clientId'),
@@ -173,7 +168,7 @@ const getAllLoanApplication = async (
     loanApplicationQuery
       .customPipeline([
         {
-          $match: { ...matchStage }
+          $match: { ...matchStage },
         },
         {
           $lookup: {
@@ -197,7 +192,6 @@ const getAllLoanApplication = async (
 
     loanApplicationQuery.countTotal(LoanApplication),
   ]);
-
 
   return { meta, result };
 };

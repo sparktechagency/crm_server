@@ -12,13 +12,16 @@ const getRepaymentsField = async () => {
   return result;
 };
 
-const updateRepayments = async (id: string, data: Record<string, DataEntry>,) => {
+const updateRepayments = async (
+  id: string,
+  data: Record<string, DataEntry>,
+) => {
   const filteredData: Record<string, DataEntry> = Object.fromEntries(
     // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
     Object.entries(data).filter(([key, value]) => {
       const entry = value as DataEntry;
       return entry.label !== 'undefined';
-    })
+    }),
   );
 
   // Separate IDs (keys) and values (DataEntry)
@@ -35,14 +38,14 @@ const updateRepayments = async (id: string, data: Record<string, DataEntry>,) =>
 
     // Only add fields to update if they are not 'undefined'
     if (value.label !== 'undefined') updateFields.label = value.label;
-    if (value.inputName !== 'undefined') updateFields.inputName = value.inputName;
-    if (value.inputType !== 'undefined') updateFields.inputType = value.inputType;
-    if (value.placeholder !== 'undefined') updateFields.placeholder = value.placeholder;
+    if (value.inputName !== 'undefined')
+      updateFields.inputName = value.inputName;
+    if (value.inputType !== 'undefined')
+      updateFields.inputType = value.inputType;
+    if (value.placeholder !== 'undefined')
+      updateFields.placeholder = value.placeholder;
 
-    return RepaymentsField.updateOne(
-      { _id: id },
-      { $set: updateFields }
-    );
+    return RepaymentsField.updateOne({ _id: id }, { $set: updateFields });
   });
 
   // Wait for all updates to finish

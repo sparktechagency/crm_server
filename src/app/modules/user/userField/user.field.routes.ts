@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import {
-  CreateFieldSchema
-} from '../../../../shared/validation/commonZodValidation';
+import { CreateFieldSchema } from '../../../../shared/validation/commonZodValidation';
 import { USER_ROLE } from '../../../constant';
 import { auth } from '../../../middleware/auth';
 import validateRequest from '../../../middleware/validation';

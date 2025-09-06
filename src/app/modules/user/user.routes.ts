@@ -40,11 +40,40 @@ router
     auth(USER_ROLE.admin),
     UserController.getFieldOfficerRecord,
   )
+  .get(
+    '/profile',
+    auth(
+      USER_ROLE.hr,
+      USER_ROLE.admin,
+      USER_ROLE.hubManager,
+      USER_ROLE.spokeManager,
+      USER_ROLE.fieldOfficer,
+      USER_ROLE.supervisor,
+    ),
+    UserController.getProfile,
+  )
   .patch(
     '/assign_spoke',
     auth(USER_ROLE.hubManager),
     parseFormData,
     UserController.assignSpoke,
+  )
+  .patch(
+    '/update_profile',
+    auth(
+      USER_ROLE.hr,
+      USER_ROLE.admin,
+      USER_ROLE.hubManager,
+      USER_ROLE.spokeManager,
+      USER_ROLE.fieldOfficer,
+      USER_ROLE.supervisor,
+    ),
+    upload.fields([
+      { name: 'image', maxCount: 1 },
+      { name: 'cv', maxCount: 1 },
+    ]),
+    parseFormData,
+    UserController.updateProfile,
   )
   .patch(
     '/update_users/:id',
