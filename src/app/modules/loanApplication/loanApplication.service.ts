@@ -93,6 +93,7 @@ const createLoanApplication = async (
 
     const receiverId = [user.hubId, user.spokeId];
 
+    console.log(receiverId, "receiverId");
     // Send notifications and wait for all to be completed
     await Promise.all(
       receiverId.map(async (id) => {
@@ -100,7 +101,7 @@ const createLoanApplication = async (
           type: NOTIFICATION_TYPE.NEW_APPLICATION_ADDED,
           senderId: user._id,
           receiverId: id,
-          linkId: loanApplication[0]._id,
+          linkId: loanApplication[0]?._id,
           role: user.role,
           message: `${user.customFields.name} has added a new loan application`,
         };
@@ -130,13 +131,13 @@ const getAllLoanApplication = async (
 
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
-      hubId: user.hubId,
-      spokeId: user.spokeId,
-      fieldOfficerId: user._id,
+      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
+      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: user._id,
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
       ...(query.supervisorApproval
         ? { supervisorApproval: query.supervisorApproval }
         : { supervisorApproval: LOAN_APPLICATION_STATUS.approved }),
@@ -151,8 +152,10 @@ const getAllLoanApplication = async (
     matchStage = {};
   }
 
-  console.log(query, 'query ===========>');
+  // console.log(query, 'query ===========>');
 
+
+  console.log(matchStage, 'matchStage ===========>');
   const loanApplicationQuery = new AggregationQueryBuilder(query);
 
   // const loanApplicationQuery = new QueryBuilder(

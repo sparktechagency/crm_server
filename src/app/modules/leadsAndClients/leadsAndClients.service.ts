@@ -1,24 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import httpStatus from 'http-status';
 import mongoose from 'mongoose';
-import { cacheData, deleteCache, getCachedData } from '../../../redis';
+import { deleteCache, getCachedData } from '../../../redis';
+import sendNotification from '../../../socket/sendNotification';
+import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
-import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import AppError from '../../utils/AppError';
 import generateUID from '../../utils/generateUID';
-import { minuteToSecond } from '../../utils/minitToSecond';
 import { TMeta } from '../../utils/sendResponse';
+import { transactionWrapper } from '../../utils/transactionWrapper';
+import LoanApplication from '../loanApplication/loanApplication.model';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import {
   IReturnTypeLeadsAndClients,
   LeadsAndClients,
 } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
-import LoanApplication from '../loanApplication/loanApplication.model';
-import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
-import { USER_ROLE } from '../../constant';
-import { transactionWrapper } from '../../utils/transactionWrapper';
-import httpStatus from 'http-status';
-import AppError from '../../utils/AppError';
-import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
@@ -88,17 +86,17 @@ const getAllLeadsAndClients = async (
   }>(cacheKey);
   if (cached) {
     console.log('🚀 Serving from Redis cache');
-    return cached;
+    // return cached;
   }
 
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
-      fieldOfficerId: user._id,
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: user._id,
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
       isClient: false,
     };
   } else if (user.role === USER_ROLE.admin) {
@@ -107,25 +105,30 @@ const getAllLeadsAndClients = async (
     };
   }
 
-  const leadsQuery = new QueryBuilder(
-    LeadsAndClientsModel.find({
-      ...matchStage,
-    }),
-    query,
-  )
-    .search(['customFields.name', 'email', 'phoneNumber'])
-    .sort()
-    .paginate()
-    .filter(['status']);
+  console.log(matchStage, "matchStage");
+
+
+  const leadsQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
-    leadsQuery.queryModel,
-    leadsQuery.countTotal(),
+    leadsQuery
+      .customPipeline([
+        {
+          $match: {
+            ...matchStage,
+          }
+        }
+      ])
+      .search(['customFields.name', 'email', 'phoneNumber'])
+      .sort()
+      .paginate()
+      .execute(LeadsAndClientsModel),
+    leadsQuery.countTotal(LeadsAndClientsModel),
   ]);
 
-  const time = minuteToSecond(10);
+  // const time = minuteToSecond(10);
   // Store in Redis cache
-  await cacheData(cacheKey, { meta, result }, time);
+  // await cacheData(cacheKey, { meta, result }, time);
 
   return { meta, result };
 };
@@ -192,7 +195,7 @@ const deleteLeadsAndClient = async (
   });
 
   // Remove Redis cache
-  await deleteCache(cacheKey);
+  // await deleteCache(cacheKey);
   return result;
 };
 

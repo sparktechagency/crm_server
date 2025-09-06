@@ -2,20 +2,19 @@
 import httpStatus from 'http-status';
 import { cacheData, deleteCache, getCachedData } from '../../../redis';
 import { passwordSend } from '../../../shared/html/passwordSendingHtml';
-import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import sendNotification from '../../../socket/sendNotification';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
 import generateUID from '../../utils/generateUID';
-import sendMail from '../../utils/sendMail';
-import User from './user.model';
-import { findUserWithUid, uidForUserRole } from './user.utils';
 import { minuteToSecond } from '../../utils/minitToSecond';
-import { TFindUserWithUid, TUser } from './user.interface';
+import sendMail from '../../utils/sendMail';
 import { TMeta } from '../../utils/sendResponse';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
-import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import { TFindUserWithUid, TUser } from './user.interface';
+import User from './user.model';
+import { findUserWithUid, uidForUserRole } from './user.utils';
 
 const createUsers = async (
   payload: Record<string, unknown>,
