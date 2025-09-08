@@ -16,7 +16,7 @@ router
   )
   .get(
     '/get_users_fields',
-    auth(USER_ROLE.admin, USER_ROLE.hr),
+    auth(USER_ROLE.admin, USER_ROLE.hr, USER_ROLE.hubManager),
     UserFieldController.getUsersFields,
   )
   .patch(

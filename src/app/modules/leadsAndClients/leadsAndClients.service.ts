@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
-import { deleteCache, getCachedData } from '../../../redis';
 import sendNotification from '../../../socket/sendNotification';
 import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
@@ -23,7 +22,7 @@ const createLeadsAndClients = async (
   user: TAuthUser,
   session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
-  const cacheKey = `leadsAndClients::${user._id}`;
+
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
@@ -50,8 +49,6 @@ const createLeadsAndClients = async (
     result = doc as LeadsAndClients;
   }
 
-  await deleteCache(cacheKey);
-
   const receiverId = [user.hubId, user.spokeId, user.adminId];
 
   // Send notifications and wait for all to be completed
@@ -77,17 +74,6 @@ const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
-  const cacheKey = `leadsAndClients::${user._id}-${JSON.stringify(query)}`;
-
-  // Try to fetch from Redis cache first
-  const cached = await getCachedData<{
-    meta: TMeta;
-    result: LeadsAndClients[];
-  }>(cacheKey);
-  if (cached) {
-    console.log('🚀 Serving from Redis cache');
-    // return cached;
-  }
 
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -104,9 +90,6 @@ const getAllLeadsAndClients = async (
       isClient: false,
     };
   }
-
-  console.log(matchStage, "matchStage");
-
 
   const leadsQuery = new AggregationQueryBuilder(query);
 
@@ -126,10 +109,6 @@ const getAllLeadsAndClients = async (
     leadsQuery.countTotal(LeadsAndClientsModel),
   ]);
 
-  // const time = minuteToSecond(10);
-  // Store in Redis cache
-  // await cacheData(cacheKey, { meta, result }, time);
-
   return { meta, result };
 };
 
@@ -144,7 +123,6 @@ const updateLeadsOrClients = async (
     throw new Error('Leads not found');
   }
 
-  const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,8 +143,6 @@ const updateLeadsOrClients = async (
     { new: true },
   );
 
-  // Remove Redis cache
-  await deleteCache(cacheKey);
   return result;
 };
 
@@ -174,7 +150,6 @@ const deleteLeadsAndClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-  const cacheKey = `leadsAndClients::${user._id}`;
 
   let matchStage = {};
 
@@ -194,8 +169,6 @@ const deleteLeadsAndClient = async (
     isClient: false,
   });
 
-  // Remove Redis cache
-  // await deleteCache(cacheKey);
   return result;
 };
 

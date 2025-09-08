@@ -1,19 +1,16 @@
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
-import { cacheData, getCachedData } from '../../../redis';
+import sendNotification from '../../../socket/sendNotification';
+import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import AppError from '../../utils/AppError';
-import { minuteToSecond } from '../../utils/minitToSecond';
-import { TMeta } from '../../utils/sendResponse';
 import { IRepaymentsDates } from '../loanApplication/loanApplication.interface';
 import LoanApplication from '../loanApplication/loanApplication.model';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TRepayments } from './repayments.interface';
 import Repayments from './repayments.model';
 import { calculatePenalty, findClientAndLoan } from './repayments.utils';
-import { USER_ROLE } from '../../constant';
-import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
 
 const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
   const { month, ...rest } = payload;
@@ -90,15 +87,6 @@ const getAllRepayments = async (
 ) => {
   const repaymentQuery = new AggregationQueryBuilder(query);
 
-  const cacheKey = `getAllRepayments-${user._id}-${JSON.stringify(query)}`;
-  const cached = await getCachedData<{ meta: TMeta; result: TRepayments[] }>(
-    cacheKey,
-  );
-  if (cached) {
-    console.log('🚀 Serving from Redis cache');
-    // return cached;
-  }
-
   let matchStage = {};
 
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -158,8 +146,7 @@ const getAllRepayments = async (
 
   const meta = await repaymentQuery.countTotal(Repayments);
 
-  const time = minuteToSecond(5);
-  await cacheData(cacheKey, { meta, result }, time);
+
   return { meta, result };
 };
 
