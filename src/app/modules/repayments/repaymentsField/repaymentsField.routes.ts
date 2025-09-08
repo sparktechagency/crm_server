@@ -17,11 +17,7 @@ router
     validateRequest(CreateFieldSchema),
     RepaymentsFieldController.addUserField,
   )
-  .get(
-    '/',
-    auth(USER_ROLE.admin),
-    RepaymentsFieldController.getRepaymentsField,
-  )
+  .get('/', auth(USER_ROLE.admin), RepaymentsFieldController.getRepaymentsField)
   .patch(
     '/',
     auth(USER_ROLE.admin),

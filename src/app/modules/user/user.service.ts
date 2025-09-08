@@ -1,21 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
-import { cacheData, deleteCache, getCachedData } from '../../../redis';
 import { passwordSend } from '../../../shared/html/passwordSendingHtml';
-import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import sendNotification from '../../../socket/sendNotification';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
 import generateUID from '../../utils/generateUID';
 import sendMail from '../../utils/sendMail';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import { TFindUserWithUid } from './user.interface';
 import User from './user.model';
 import { findUserWithUid, uidForUserRole } from './user.utils';
-import { minuteToSecond } from '../../utils/minitToSecond';
-import { TFindUserWithUid, TUser } from './user.interface';
-import { TMeta } from '../../utils/sendResponse';
-import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
-import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import mongoose from 'mongoose';
 
 const createUsers = async (
   payload: Record<string, unknown>,
@@ -57,7 +54,7 @@ const createUsers = async (
     receiverIds = [user.adminId, data.hubId];
   } else if (role === USER_ROLE.hubManager) {
     receiverIds = [user.adminId];
-  } 
+  }
 
   if (user.role === USER_ROLE.admin) {
     return createUser;
@@ -94,7 +91,6 @@ const updateUserActions = async (
     throw new AppError(httpStatus.BAD_REQUEST, `User already ${action}`);
   }
 
-  const cacheKey = `getAllDrivers-${authUser._id}`;
   switch (action) {
     case 'blocked':
       user.status = 'blocked';
@@ -108,7 +104,6 @@ const updateUserActions = async (
       break;
   }
 
-  await deleteCache(cacheKey);
 
   return user;
 };
@@ -118,23 +113,14 @@ const getUsersBaseOnRole = async (
   query: Record<string, unknown>,
 ) => {
   const { role } = query;
-  const cacheKey = `users::${user._id}-${role}`;
-  // Try to fetch from Redis cache first
-  const cached = await getCachedData<{ result: TUser[] }>(cacheKey);
-  if (cached) {
-    console.log('🚀 Serving from Redis cache');
-    // return cached;
-  }
-
-  // Build match stage dynamically
   const matchStage: Record<string, unknown> =
     user.role === USER_ROLE.hubManager
-      ? { hubId: user._id }
+      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
       : user.role === USER_ROLE.spokeManager
-        ? { spokeId: user._id }
+        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
         : {};
 
-  const userQuery = new AggregationQueryBuilder(query)
+  const userQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
     userQuery
@@ -142,7 +128,7 @@ const getUsersBaseOnRole = async (
         {
           $match: {
             ...matchStage,
-            role
+            role,
           },
         },
       ])
@@ -154,8 +140,6 @@ const getUsersBaseOnRole = async (
 
     userQuery.countTotal(User),
   ]);
-  const time = minuteToSecond(5);
-  await cacheData(cacheKey, { meta, result }, time);
 
   return { meta, result };
 };
@@ -214,24 +198,18 @@ const getAllManagers = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-  const cacheKey = `getAllManagers-${user._id}-${query?.role}`;
 
-  const cached = await getCachedData<{ meta: TMeta; result: TUser[] }>(
-    cacheKey,
-  );
-  if (cached) {
-    console.log('🚀 Serving from Redis cache');
-    // return cached;
-  }
-
-  const managersQuery = new AggregationQueryBuilder(query)
+  const managersQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
     managersQuery
       .customPipeline([
         {
           $match: {
-            $or: [{ role: USER_ROLE.hubManager }, { role: USER_ROLE.spokeManager }],
+            $or: [
+              { role: USER_ROLE.hubManager },
+              { role: USER_ROLE.spokeManager },
+            ],
           },
         },
       ])
@@ -244,9 +222,6 @@ const getAllManagers = async (
     managersQuery.countTotal(User),
   ]);
 
-  const time = minuteToSecond(5);
-  await cacheData(cacheKey, { meta, result }, time);
-
   return { meta, result };
 };
 
@@ -255,6 +230,34 @@ const getFieldOfficerRecord = async (
   query: Record<string, unknown>,
 ) => {
   return user;
+};
+
+const getProfile = async (user: TAuthUser) => {
+  const result = await User.findById(user._id);
+
+  return result;
+};
+
+const updateProfile = async (
+  user: TAuthUser,
+  payload: Record<string, unknown>,
+) => {
+  const { phoneNumber, ...rest } = payload;
+
+  const updateQuery: Record<string, any> = {};
+  for (const key in rest) {
+    updateQuery[`customFields.${key}`] = rest[key];
+  }
+
+  const userData = {
+    phoneNumber,
+    ...updateQuery,
+  };
+
+  const result = await User.findByIdAndUpdate(user._id, userData, {
+    new: true,
+  });
+  return result;
 };
 
 export const UserService = {
@@ -266,4 +269,6 @@ export const UserService = {
   deleteUsers,
   getAllManagers,
   getFieldOfficerRecord,
+  getProfile,
+  updateProfile,
 };

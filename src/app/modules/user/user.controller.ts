@@ -125,6 +125,38 @@ const getFieldOfficerRecord = catchAsync(async (req, res) => {
   });
 });
 
+const getProfile = catchAsync(async (req, res) => {
+  const result = await UserService.getProfile(req.user as TAuthUser);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Profile fetched successfully',
+    data: result,
+  });
+});
+
+const updateProfile = catchAsync(async (req, res) => {
+  const fields = ['image', 'cv'];
+
+  const files = req.files as { [fieldname: string]: MulterFile[] };
+
+  for (const field of fields) {
+    if (files[field]) {
+      req.body[field] = files[field][0].path;
+    }
+  }
+  const result = await UserService.updateProfile(
+    req.user as TAuthUser,
+    req.body,
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User updated successfully',
+    data: result,
+  });
+});
+
 export const UserController = {
   updateUserActions,
   createUsers,
@@ -134,4 +166,6 @@ export const UserController = {
   deleteUsers,
   getAllManagers,
   getFieldOfficerRecord,
+  getProfile,
+  updateProfile,
 };

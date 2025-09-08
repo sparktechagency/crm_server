@@ -1,31 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import httpStatus from 'http-status';
 import mongoose from 'mongoose';
-import { cacheData, deleteCache, getCachedData } from '../../../redis';
+import sendNotification from '../../../socket/sendNotification';
+import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
-import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import AppError from '../../utils/AppError';
 import generateUID from '../../utils/generateUID';
-import { minuteToSecond } from '../../utils/minitToSecond';
 import { TMeta } from '../../utils/sendResponse';
+import { transactionWrapper } from '../../utils/transactionWrapper';
+import LoanApplication from '../loanApplication/loanApplication.model';
+import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import {
   IReturnTypeLeadsAndClients,
   LeadsAndClients,
 } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
-import LoanApplication from '../loanApplication/loanApplication.model';
-import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
-import { USER_ROLE } from '../../constant';
-import { transactionWrapper } from '../../utils/transactionWrapper';
-import httpStatus from 'http-status';
-import AppError from '../../utils/AppError';
-import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import sendNotification from '../../../socket/sendNotification';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
   session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
-  const cacheKey = `leadsAndClients::${user._id}`;
+
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
@@ -52,8 +49,6 @@ const createLeadsAndClients = async (
     result = doc as LeadsAndClients;
   }
 
-  await deleteCache(cacheKey);
-
   const receiverId = [user.hubId, user.spokeId, user.adminId];
 
   // Send notifications and wait for all to be completed
@@ -79,26 +74,15 @@ const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
-  const cacheKey = `leadsAndClients::${user._id}-${JSON.stringify(query)}`;
-
-  // Try to fetch from Redis cache first
-  const cached = await getCachedData<{
-    meta: TMeta;
-    result: LeadsAndClients[];
-  }>(cacheKey);
-  if (cached) {
-    console.log('🚀 Serving from Redis cache');
-    return cached;
-  }
 
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
-      fieldOfficerId: user._id,
+      fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: user._id,
+      hubId: new mongoose.Types.ObjectId(String(user._id)),
       isClient: false,
     };
   } else if (user.role === USER_ROLE.admin) {
@@ -107,26 +91,23 @@ const getAllLeadsAndClients = async (
     };
   }
 
-  const leadsQuery = new QueryBuilder(
-    LeadsAndClientsModel.find({
-      ...matchStage,
-    }),
-    query,
-  )
-    .search(['customFields.name', 'email', 'phoneNumber'])
-    .sort()
-    .paginate()
-    .filter(['status']);
+  const leadsQuery = new AggregationQueryBuilder(query);
 
   const [result, meta] = await Promise.all([
-    leadsQuery.queryModel,
-    leadsQuery.countTotal(),
+    leadsQuery
+      .customPipeline([
+        {
+          $match: {
+            ...matchStage,
+          }
+        }
+      ])
+      .search(['customFields.name', 'email', 'phoneNumber'])
+      .sort()
+      .paginate()
+      .execute(LeadsAndClientsModel),
+    leadsQuery.countTotal(LeadsAndClientsModel),
   ]);
-
-
-  const time = minuteToSecond(10);
-  // Store in Redis cache
-  await cacheData(cacheKey, { meta, result }, time);
 
   return { meta, result };
 };
@@ -142,7 +123,6 @@ const updateLeadsOrClients = async (
     throw new Error('Leads not found');
   }
 
-  const cacheKey = `leadsAndClients::${user._id}`;
   const { email, phoneNumber, ...rest } = payload;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -163,8 +143,6 @@ const updateLeadsOrClients = async (
     { new: true },
   );
 
-  // Remove Redis cache
-  await deleteCache(cacheKey);
   return result;
 };
 
@@ -172,7 +150,6 @@ const deleteLeadsAndClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-  const cacheKey = `leadsAndClients::${user._id}`;
 
   let matchStage = {};
 
@@ -192,8 +169,6 @@ const deleteLeadsAndClient = async (
     isClient: false,
   });
 
-  // Remove Redis cache
-  await deleteCache(cacheKey);
   return result;
 };
 
@@ -263,7 +238,6 @@ const deleteClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-
   const result = transactionWrapper(async (session) => {
     const client = await LeadsAndClientsModel.findOneAndDelete(
       { _id: id },

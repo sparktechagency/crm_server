@@ -1,7 +1,5 @@
 import { Router } from 'express';
-import {
-  CreateFieldSchema
-} from '../../../../shared/validation/commonZodValidation';
+import { CreateFieldSchema } from '../../../../shared/validation/commonZodValidation';
 import { USER_ROLE } from '../../../constant';
 import { auth } from '../../../middleware/auth';
 import validateRequest from '../../../middleware/validation';
@@ -18,7 +16,7 @@ router
   )
   .get(
     '/get_users_fields',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.hr, USER_ROLE.hubManager),
     UserFieldController.getUsersFields,
   )
   .patch(
