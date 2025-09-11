@@ -115,7 +115,7 @@ const getAllLeadsAndClients = async (
 const updateLeadsOrClients = async (
   id: string,
   payload: Record<string, unknown>,
-  user: TAuthUser,
+  user?: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
   const findLeads = await LeadsAndClientsModel.findById(id);
 

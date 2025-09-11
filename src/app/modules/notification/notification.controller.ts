@@ -6,7 +6,7 @@ import { TAuthUser } from '../../interface/authUser';
 
 const getNotifications = catchAsync(async (req, res) => {
   const result = await NotificationService.getNotifications(
-    req.user.notificationId,
+    req.user as TAuthUser,
     req.query,
   );
 

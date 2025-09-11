@@ -16,7 +16,7 @@ router
   )
   .get(
     '/',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.fieldOfficer),
     LeadsAndClientsFieldController.getLeadsAndClientsFields,
   )
   .patch(
