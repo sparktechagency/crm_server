@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { TAuthUser } from '../../interface/authUser';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import Notification from './notification.model';
@@ -10,7 +11,7 @@ const createNotification = async (payload: any) => {
 };
 
 const getNotifications = async (
-  userId: string,
+  user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
   const notificationQuery = new AggregationQueryBuilder(query);
@@ -18,7 +19,9 @@ const getNotifications = async (
   const result = await notificationQuery
     .customPipeline([
       {
-        $match: {},
+        $match: {
+          receiverId: new mongoose.Types.ObjectId(String(user._id)),
+        },
       },
     ])
     .paginate()
@@ -31,7 +34,7 @@ const getNotifications = async (
 
 const getNotificationCount = async (user: TAuthUser) => {
   const result = await Notification.countDocuments({
-    receiverId: user.userId,
+    receiverId: user._id,
     isRead: false,
   }).countDocuments();
   return result;
@@ -39,7 +42,7 @@ const getNotificationCount = async (user: TAuthUser) => {
 
 const notificationAction = async (user: TAuthUser) => {
   const findNotification = await Notification.find({
-    receiverId: user.userId,
+    receiverId: user._id,
     isRead: false,
   });
 

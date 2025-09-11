@@ -15,7 +15,7 @@ const createLoanApplication = catchAsync(async (req, res) => {
   );
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     message: 'Loan application created successfully',
     data: result,
   });

@@ -46,8 +46,8 @@ const updateLeadsOrClients = catchAsync(async (req, res) => {
   );
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.CREATED,
-    message: 'Leads and clients created successfully',
+    statusCode: httpStatus.OK,
+    message: 'Leads and clients updated successfully',
     data: result,
   });
 });

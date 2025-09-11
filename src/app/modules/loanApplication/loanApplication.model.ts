@@ -120,7 +120,6 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
     },
     grossProfit: { type: Number, required: [true, 'Gross profit is required'] },
     term: { type: String, required: [true, 'Term is required'] },
-    nid: { type: String, required: [true, 'NID is required'] },
   },
   {
     timestamps: true,

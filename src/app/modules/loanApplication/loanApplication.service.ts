@@ -37,6 +37,7 @@ const createLoanApplication = async (
       phoneNumber: payload.phoneNumber,
       homeAddress: payload.homeAddress,
       image: payload.image,
+      nid: payload.nid,
     };
 
     const findHubForFormula = (await LocationProfile.findOne({
@@ -152,20 +153,7 @@ const getAllLoanApplication = async (
     matchStage = {};
   }
 
-  // console.log(query, 'query ===========>');
-
-
-  console.log(matchStage, 'matchStage ===========>');
   const loanApplicationQuery = new AggregationQueryBuilder(query);
-
-  // const loanApplicationQuery = new QueryBuilder(
-  //   LoanApplication.find({ ...matchStage }).populate('clientId'),
-  //   query,
-  // )
-  //   .search(['clientId.customFields.name', 'email', 'uid'])
-  //   .sort()
-  //   .paginate()
-  //   .filter(['supervisorApproval']);
 
   const [result, meta] = await Promise.all([
     loanApplicationQuery
@@ -204,6 +192,18 @@ const updateLoanApplication = async (
   payload: Partial<TLoanApplication>,
   user: TAuthUser,
 ) => {
+
+  const leadInfo = {
+    name: payload.name,
+    email: payload.email,
+    phoneNumber: payload.phoneNumber,
+    homeAddress: payload.homeAddress,
+    image: payload.image,
+    nid: payload.nid,
+  };
+
+
+
   let amountCalculation;
   if (payload.loanAmountRequested) {
     const findHubForFormula = (await LocationProfile.findOne({
@@ -229,6 +229,17 @@ const updateLoanApplication = async (
       new: true,
     },
   );
+
+  // Check if any field in leadInfo has a value (not empty or undefined)
+  const isLeadInfoValid = Object.values(leadInfo).some(value => value !== null && value !== undefined && value !== "");
+  if (isLeadInfoValid) {
+    (await LeadsAndClientsService.updateLeadsOrClients(
+      result?.clientId as any,
+      leadInfo
+    )) as IReturnTypeLeadsAndClients;
+
+  }
+
   return result;
 };
 

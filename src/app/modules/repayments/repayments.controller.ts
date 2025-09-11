@@ -11,7 +11,7 @@ const createRepayments = catchAsync(async (req, res) => {
   );
   sendResponse(res, {
     success: true,
-    statusCode: httpStatus.OK,
+    statusCode: httpStatus.CREATED,
     message: 'Repayments created successfully',
     data: result,
   });
