@@ -11,6 +11,7 @@ import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TRepayments } from './repayments.interface';
 import Repayments from './repayments.model';
 import { calculatePenalty, findClientAndLoan } from './repayments.utils';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
   const { month, ...rest } = payload;
@@ -87,6 +88,10 @@ const getAllRepayments = async (
 ) => {
   const repaymentQuery = new AggregationQueryBuilder(query);
 
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
+
   let matchStage = {};
 
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -108,6 +113,7 @@ const getAllRepayments = async (
       {
         $match: {
           ...matchStage,
+          ...filteringData,
         },
       },
       {
@@ -146,12 +152,10 @@ const getAllRepayments = async (
 
   const meta = await repaymentQuery.countTotal(Repayments);
 
-
   return { meta, result };
 };
 
 const confirmRepayments = async (id: string, user: TAuthUser) => {
-
   const result = await Repayments.findOneAndUpdate(
     { _id: id },
     { $set: { isConfirm: true } },

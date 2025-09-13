@@ -1,6 +1,7 @@
 import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import QueryBuilder from '../../QueryBuilder/queryBuilder';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import User from '../user/user.model';
 
 const allFieldOfficerRequest = async (
@@ -8,6 +9,10 @@ const allFieldOfficerRequest = async (
   query: Record<string, unknown>,
 ) => {
   const { isAssignSpoke } = query;
+
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
 
   const spokeStatus = isAssignSpoke === 'true' ? true : false;
 
@@ -24,6 +29,7 @@ const allFieldOfficerRequest = async (
     User.find({
       role: 'fieldOfficer',
       ...matchStage,
+      ...filteringData,
       isAssignSpoke: spokeStatus,
     }),
     query,

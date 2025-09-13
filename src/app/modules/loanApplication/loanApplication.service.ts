@@ -22,6 +22,7 @@ import LocationProfile from '../locationProfile/locationProfile.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import User from '../user/user.model';
 import { installmentAmountCalculator } from './loanApplication.utils';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createLoanApplication = async (
   user: TAuthUser,
@@ -94,7 +95,7 @@ const createLoanApplication = async (
 
     const receiverId = [user.hubId, user.spokeId];
 
-    console.log(receiverId, "receiverId");
+    console.log(receiverId, 'receiverId');
     // Send notifications and wait for all to be completed
     await Promise.all(
       receiverId.map(async (id) => {
@@ -129,6 +130,9 @@ const getAllLoanApplication = async (
   query: Record<string, unknown>,
 ) => {
   let matchStage = {};
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
 
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
@@ -159,7 +163,7 @@ const getAllLoanApplication = async (
     loanApplicationQuery
       .customPipeline([
         {
-          $match: { ...matchStage },
+          $match: { ...matchStage, ...filteringData },
         },
         {
           $lookup: {
@@ -192,7 +196,6 @@ const updateLoanApplication = async (
   payload: Partial<TLoanApplication>,
   user: TAuthUser,
 ) => {
-
   const leadInfo = {
     name: payload.name,
     email: payload.email,
@@ -201,8 +204,6 @@ const updateLoanApplication = async (
     image: payload.image,
     nid: payload.nid,
   };
-
-
 
   let amountCalculation;
   if (payload.loanAmountRequested) {
@@ -231,13 +232,14 @@ const updateLoanApplication = async (
   );
 
   // Check if any field in leadInfo has a value (not empty or undefined)
-  const isLeadInfoValid = Object.values(leadInfo).some(value => value !== null && value !== undefined && value !== "");
+  const isLeadInfoValid = Object.values(leadInfo).some(
+    (value) => value !== null && value !== undefined && value !== '',
+  );
   if (isLeadInfoValid) {
     (await LeadsAndClientsService.updateLeadsOrClients(
       result?.clientId as any,
-      leadInfo
+      leadInfo,
     )) as IReturnTypeLeadsAndClients;
-
   }
 
   return result;

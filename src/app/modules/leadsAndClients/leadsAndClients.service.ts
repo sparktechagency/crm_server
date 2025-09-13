@@ -16,13 +16,13 @@ import {
   LeadsAndClients,
 } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
   session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
-
   const { email, phoneNumber, ...rest } = payload;
 
   const leadClientData = {
@@ -74,6 +74,9 @@ const getAllLeadsAndClients = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ): Promise<{ meta: TMeta; result: LeadsAndClients[] }> => {
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
 
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -99,8 +102,9 @@ const getAllLeadsAndClients = async (
         {
           $match: {
             ...matchStage,
-          }
-        }
+            ...filteringData,
+          },
+        },
       ])
       .search(['customFields.name', 'email', 'phoneNumber'])
       .sort()
@@ -150,7 +154,6 @@ const deleteLeadsAndClient = async (
   id: string,
   user: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-
   let matchStage = {};
 
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -184,6 +187,10 @@ const getAllClients = async (
 ) => {
   const clientQuery = new AggregationQueryBuilder(query);
 
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
+
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
@@ -205,6 +212,7 @@ const getAllClients = async (
         {
           $match: {
             ...matchStage,
+            ...filteringData,
           },
         },
         {

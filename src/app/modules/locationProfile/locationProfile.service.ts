@@ -11,7 +11,6 @@ const createLocationProfile = async (
   payload: TLocationProfile,
   user: TAuthUser,
 ) => {
-
   const findHub = await User.findOne({
     uid: payload.hubUid,
   });
@@ -77,7 +76,6 @@ const updateLocationProfile = async (
 };
 
 const deleteLocationProfile = async (id: string, user: TAuthUser) => {
-
   const result = await LocationProfile.findByIdAndDelete(id);
 
   return result;
