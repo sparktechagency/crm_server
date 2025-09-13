@@ -13,6 +13,7 @@ import { TFindUserWithUid } from './user.interface';
 import User from './user.model';
 import { findUserWithUid, uidForUserRole } from './user.utils';
 import mongoose from 'mongoose';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createUsers = async (
   payload: Record<string, unknown>,
@@ -104,7 +105,6 @@ const updateUserActions = async (
       break;
   }
 
-
   return user;
 };
 
@@ -113,6 +113,11 @@ const getUsersBaseOnRole = async (
   query: Record<string, unknown>,
 ) => {
   const { role } = query;
+
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
+
   const matchStage: Record<string, unknown> =
     user.role === USER_ROLE.hubManager
       ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
@@ -128,6 +133,7 @@ const getUsersBaseOnRole = async (
         {
           $match: {
             ...matchStage,
+            ...filteringData,
             role,
           },
         },
@@ -198,8 +204,11 @@ const getAllManagers = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
-
   const managersQuery = new AggregationQueryBuilder(query);
+
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
 
   const [result, meta] = await Promise.all([
     managersQuery
@@ -210,6 +219,7 @@ const getAllManagers = async (
               { role: USER_ROLE.hubManager },
               { role: USER_ROLE.spokeManager },
             ],
+            ...filteringData,
           },
         },
       ])

@@ -6,9 +6,16 @@ const createLoanApplicationSchema = z.object({
 
     email: z.string().email({ message: 'Invalid email address' }).optional(),
     phoneNumber: z
-      .string({ message: 'Phone number must be at least 10 digits' }).optional(),
-    homeAddress: z.string().min(5, { message: 'Home address is too short' }).optional(),
-    name: z.string().min(2, { message: 'Name must be at least 2 characters' }).optional(),
+      .string({ message: 'Phone number must be at least 10 digits' })
+      .optional(),
+    homeAddress: z
+      .string()
+      .min(5, { message: 'Home address is too short' })
+      .optional(),
+    name: z
+      .string()
+      .min(2, { message: 'Name must be at least 2 characters' })
+      .optional(),
 
     applicantStatus: z.enum(['New', 'From Leads'], {
       message: "Applicant status must be 'New' or 'From Leads'",
@@ -34,7 +41,10 @@ const createLoanApplicationSchema = z.object({
       .string()
       .min(1, { message: 'Preferred contact is required' }),
     term: z.string().min(1, { message: 'Term is required' }),
-    nid: z.string().min(5, { message: 'NID must be at least 5 characters' }).optional(),
+    nid: z
+      .string()
+      .min(5, { message: 'NID must be at least 5 characters' })
+      .optional(),
 
     startDate: z.coerce.date({
       message: 'Start date is required and must be valid',
@@ -50,9 +60,7 @@ const updateLoanApplicationSchema = z.object({
     leadUid: z.string().min(1, { message: 'Lead UID is required' }).optional(),
 
     email: z.string().email({ message: 'Invalid email address' }).optional(),
-    phoneNumber: z
-      .string()
-      .optional(),
+    phoneNumber: z.string().optional(),
     homeAddress: z
       .string()
       .min(5, { message: 'Home address is too short' })

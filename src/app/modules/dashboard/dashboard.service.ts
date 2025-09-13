@@ -9,6 +9,7 @@ import Repayments from '../repayments/repayments.model';
 import User from '../user/user.model';
 import { commonPipeline, getAggregateAmount } from './dashboard.utils';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -355,6 +356,10 @@ const allFieldOfficerCollection = async (
 ) => {
   const repaymentQuery = new AggregationQueryBuilder(query);
 
+  const { filtering } = query;
+
+  const filteringData = filteringCalculation(filtering as string);
+
   const userId =
     user.role === USER_ROLE.hubManager
       ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
@@ -371,6 +376,7 @@ const allFieldOfficerCollection = async (
       {
         $match: {
           ...userId,
+          ...filteringData,
         },
       },
       {
