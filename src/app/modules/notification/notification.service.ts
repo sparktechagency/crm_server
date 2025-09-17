@@ -24,8 +24,8 @@ const getNotifications = async (
         },
       },
     ])
-    .paginate()
     .sort()
+    .paginate()
     .execute(Notification);
 
   const meta = await notificationQuery.countTotal(Notification);

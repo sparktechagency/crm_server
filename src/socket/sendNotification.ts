@@ -28,11 +28,16 @@ const sendNotification = async (
 
     delete notificationData?.jobInfo;
 
-    const connectUser: any = connectedUser.get(receiverId.toString());
+    const connectUser: any = connectedUser.get(receiverId?.toString());
     if (connectUser) {
       IO.to(connectUser.socketId).emit('notification', {
         success: true,
         data: payload,
+      });
+
+      IO.emit(`notification::${receiverId}`, {
+        success: true,
+        data: { ...payload, createdAt: new Date() },
       });
     }
 
