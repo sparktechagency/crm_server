@@ -42,7 +42,8 @@ const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
     customFields: {
       ...rest,
     },
-    installmentAmount: findLoan.installMentAmount,
+    // installmentAmount: findLoan.installMentAmount,
+    installmentAmount: payload.installmentAmount,
     clientId: findClient._id,
     applicationId: findLoan._id,
     hubId: user.hubId,
