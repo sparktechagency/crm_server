@@ -17,7 +17,7 @@ const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
 
   // Step 1: Find user (include password for validation)
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({ email }).select('+password') as any;
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
   }

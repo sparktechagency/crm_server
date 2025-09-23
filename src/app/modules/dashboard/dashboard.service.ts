@@ -140,15 +140,25 @@ const supervisorDashboardOverview = async (
     year as string,
   );
 
+
   // Run all async operations concurrently
-  const [totalApplicationApprove, totalApplicationRejected, totalApplication] =
+  const [totalApplicationApprove, totalApplicationRejected, totalApplicationPending, allApplicationCount, totalApplication] =
     await Promise.all([
+
       LoanApplication.countDocuments({
         supervisorApproval: LOAN_APPLICATION_STATUS.approved,
       }),
 
       LoanApplication.countDocuments({
         supervisorApproval: LOAN_APPLICATION_STATUS.rejected,
+      }),
+
+
+      LoanApplication.countDocuments({
+        supervisorApproval: LOAN_APPLICATION_STATUS.pending,
+      }),
+
+      LoanApplication.countDocuments({
       }),
 
       LoanApplication.aggregate([
@@ -172,6 +182,8 @@ const supervisorDashboardOverview = async (
   return {
     totalApplicationApprove,
     totalApplicationRejected,
+    totalApplicationPending,
+    allApplicationCount,
     totalApplicationChart: formattedResult,
   };
 };
@@ -233,8 +245,8 @@ const hubManagerCollectionReport = async (
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-              fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-            }
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          }
           : {};
 
   const result = await Repayments.aggregate([
@@ -367,8 +379,8 @@ const allFieldOfficerCollection = async (
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-              spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
-            }
+            spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+          }
           : {};
 
   const result = await repaymentQuery
@@ -475,12 +487,12 @@ const spokeManagerCount = async (user: TAuthUser) => {
   const userId =
     user.role === USER_ROLE.spokeManager
       ? {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        }
+        spokeId: new mongoose.Types.ObjectId(String(user._id)),
+      }
       : user.role === USER_ROLE.fieldOfficer
         ? {
-            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-          }
+          fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+        }
         : user.role === USER_ROLE.hubManager
           ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
           : {};
