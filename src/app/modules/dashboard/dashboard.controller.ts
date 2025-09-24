@@ -130,6 +130,19 @@ const adminDashboardCount = catchAsync(async (req, res) => {
   });
 });
 
+
+const seeSpokeManageAnalytics = catchAsync(async (req, res) => {
+  const result = await dashboardService.seeSpokeManageAnalytics(
+    req.params.spokeId
+  );
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'Spoke manager analytics fetched successfully',
+    data: result,
+  });
+});
+
 export const dashboardController = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
@@ -141,4 +154,5 @@ export const dashboardController = {
   allFieldOfficerCollection,
   spokeManagerCount,
   adminDashboardCount,
+  seeSpokeManageAnalytics
 };

@@ -87,7 +87,7 @@ router
   )
   .patch(
     '/actions/:id',
-    auth(USER_ROLE.admin),
+    auth(USER_ROLE.admin, USER_ROLE.hr),
     UserController.updateUserActions,
   )
   .delete(

@@ -84,7 +84,7 @@ const hrDashboardCount = async (
   );
 
   // Run all queries concurrently
-  const [totalFieldOfficer, totalManagers, fieldOfficerChart] =
+  const [totalFieldOfficer, totalManagers, allSupervsor, fieldOfficerChart] =
     await Promise.all([
       // Total Field Officers
       User.countDocuments({
@@ -102,6 +102,10 @@ const hrDashboardCount = async (
           $count: 'totalManagers',
         },
       ]),
+
+      User.countDocuments({
+        role: USER_ROLE.supervisor,
+      }),
 
       // Field Officer Chart Data
       User.aggregate([
@@ -127,6 +131,7 @@ const hrDashboardCount = async (
     totalFieldOfficer,
     totalManagers:
       totalManagers.length > 0 ? totalManagers[0].totalManagers : 0,
+    allSupervsor,
     formattedResult,
   };
 };
@@ -536,6 +541,73 @@ const adminDashboardCount = async (user: TAuthUser) => {
   };
 };
 
+const seeSpokeManageAnalytics = async (userId: string) => {
+  // Fetch both amounts in parallel to optimize time
+  const [todayCollectionAmount, overdueAmount, fieldOfficers, clients] = await Promise.all([
+    await Repayments.aggregate([
+      {
+        $match: {
+          spokeId: new mongoose.Types.ObjectId(String(userId)),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          amount: {
+            $sum: '$installmentAmount',
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          amount: 1,
+        },
+      },
+    ]),
+    await Repayments.aggregate([
+      {
+        $match: {
+          spokeId: new mongoose.Types.ObjectId(String(userId)),
+          status: 'overdue'
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          amount: {
+            $sum: '$penalty',
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          amount: 1,
+        },
+      },
+    ]),
+    User.countDocuments({
+      role: USER_ROLE.fieldOfficer,
+      spokeId: userId
+    }),
+    LeadsAndClientsModel.countDocuments({
+      spokeId: userId,
+      isClient: true
+    })
+
+  ]);
+
+  return {
+    todayCollection: todayCollectionAmount.length > 0 ? todayCollectionAmount[0].amount : 0,
+    overdue: overdueAmount.length > 0 ? overdueAmount[0].amount : 0,
+    fieldOfficers,
+    clients
+  };
+
+
+}
+
 export const dashboardService = {
   fieldOfficerDashboardCount,
   totalLeadsChart,
@@ -547,4 +619,5 @@ export const dashboardService = {
   allFieldOfficerCollection,
   spokeManagerCount,
   adminDashboardCount,
+  seeSpokeManageAnalytics
 };
