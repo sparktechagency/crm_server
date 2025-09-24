@@ -508,18 +508,27 @@ const spokeManagerCount = async (user: TAuthUser) => {
   };
 
   // Fetch both amounts in parallel to optimize time
-  const [todayCollectionAmount, overdueAmount] = await Promise.all([
+  const [todayCollectionAmount, overdueAmount, allLeads, allCleints] = await Promise.all([
     getAggregateAmount(user, matchCriteria, '$installmentAmount'),
     getAggregateAmount(
       user,
       { ...matchCriteria, status: 'overdue' },
       '$penalty',
     ),
+    LeadsAndClientsModel.countDocuments({
+      spokeId: user._id
+    }),
+    LeadsAndClientsModel.countDocuments({
+      spokeId: user._id,
+      isClient: true
+    })
   ]);
 
   return {
     todayCollection: todayCollectionAmount,
     overdue: overdueAmount,
+    allLeads,
+    allCleints
   };
 };
 
