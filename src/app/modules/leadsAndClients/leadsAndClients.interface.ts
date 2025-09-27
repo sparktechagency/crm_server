@@ -1,4 +1,5 @@
 import { Model, ObjectId } from 'mongoose';
+import { TStatus } from '../user/user.interface';
 
 export type LeadsAndClients = {
   _id?: string;
@@ -11,6 +12,7 @@ export type LeadsAndClients = {
   isClient: boolean;
   isDeleted: boolean;
   customFields: Map<string, unknown>;
+  status: TStatus
 };
 
 export interface IReturnTypeLeadsAndClients extends LeadsAndClients {

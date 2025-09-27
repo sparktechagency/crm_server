@@ -35,6 +35,9 @@ const LeadsAndClientsSchema = new Schema<LeadsAndClients, ILeadsAndClients>(
       unique: true,
     },
     isClient: { type: Boolean, default: false },
+    status: { type: String, enum: ['active', 'blocked', 'deactivated'], default: 'active' },
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     customFields: {
       type: Map,
       of: Schema.Types.Mixed, // value can be string, number, date, etc.
