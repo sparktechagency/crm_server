@@ -34,6 +34,11 @@ router
     parseFormData,
     LeadsAndClientsController.updateLeadsOrClients,
   )
+  .patch(
+    '/actions/:id',
+    auth(USER_ROLE.admin, USER_ROLE.hr, USER_ROLE.hubManager, USER_ROLE.fieldOfficer),
+    LeadsAndClientsController.updateUserActions,
+  )
   .delete(
     '/delete/:id',
     auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
