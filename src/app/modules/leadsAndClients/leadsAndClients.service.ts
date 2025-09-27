@@ -264,6 +264,38 @@ const deleteClient = async (
   return result;
 };
 
+const updateUserActions = async (
+  id: string,
+  payload: { action: 'blocked' | 'active' },
+  authUser: TAuthUser,
+): Promise<LeadsAndClients | null> => {
+
+  const { action } = payload;
+
+  const leadsAndClients = await LeadsAndClientsModel.findById(id);
+  if (!leadsAndClients) {
+    throw new AppError(httpStatus.NOT_FOUND, 'leadsAndClients not found');
+  }
+
+  if (leadsAndClients.status === action) {
+    throw new AppError(httpStatus.BAD_REQUEST, `leadsAndClients already ${action}`);
+  }
+
+  switch (action) {
+    case 'blocked':
+      leadsAndClients.status = 'blocked';
+      await leadsAndClients.save();
+      break;
+    case 'active':
+      leadsAndClients.status = 'active';
+      await leadsAndClients.save();
+      break;
+    default:
+      break;
+  }
+
+  return leadsAndClients;
+}
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
@@ -272,4 +304,5 @@ export const LeadsAndClientsService = {
   getLeadsUsingUId,
   getAllClients,
   deleteClient,
+  updateUserActions
 };

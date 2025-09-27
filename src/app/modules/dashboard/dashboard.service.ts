@@ -229,7 +229,7 @@ const hubManagerDashboardCount = async (user: TAuthUser) => {
   return {
     totalClients,
     totalApplication,
-    totalCollection: totalCollection.length > 0 ? totalCollection[0].total : 0,
+    totalCollection: totalCollection.length > 0 ? totalCollection[0].total.toFixed(2) : 0,
     totalOverdue: totalOverdue.length > 0 ? totalOverdue[0].total : 0,
   };
 };
@@ -543,7 +543,7 @@ const adminDashboardCount = async (user: TAuthUser) => {
     ]);
 
   return {
-    totalCollection,
+    totalCollection: totalCollection.toFixed(2),
     totalOverdue,
     totalApplication,
     totalClients,
