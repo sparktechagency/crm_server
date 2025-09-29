@@ -23,7 +23,7 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: ['http://localhost:3000', 'http://localhost:5173', "https://tndk.app"],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   }),
@@ -39,8 +39,8 @@ app.use(
 
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 180, // limit each IP to 180 requests per windowMs
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
     message: {
       status: 429,
       error: 'Too many requests, please try again later.',
