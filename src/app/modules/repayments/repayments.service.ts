@@ -105,6 +105,10 @@ const getAllRepayments = async (
     matchStage = {
       hubId: new mongoose.Types.ObjectId(String(user._id)),
     };
+  } else if (user.role === USER_ROLE.spokeManager) {
+    matchStage = {
+      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    };
   } else if (user.role === USER_ROLE.admin) {
     matchStage = {};
   }
