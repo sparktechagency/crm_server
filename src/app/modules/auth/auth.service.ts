@@ -16,10 +16,10 @@ import { TTwoFA } from '../twoFA/twoFA.interface';
 import { TwoFA } from '../twoFA/twoFA.model';
 
 const loginUser = async (payload: Pick<TUser, 'uid' | 'password'>) => {
-  const { uid , password } = payload;
+  const { uid, password } = payload;
 
   // Step 1: Find user (include password for validation)
-  const user = await User.findOne({ uid }).select('+password') as any;
+  const user = (await User.findOne({ uid }).select('+password')) as any;
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found!');
   }
@@ -230,7 +230,6 @@ const resendOtp = async (
   );
 };
 
-
 const twoFactorLogin = async (payload: TTwoFA) => {
   const findTwoFa = await TwoFA.findOne({ username: payload.username });
 
@@ -247,8 +246,14 @@ const twoFactorLogin = async (payload: TTwoFA) => {
     throw new AppError(httpStatus.FORBIDDEN, 'password not matched');
   }
 
-  return true;
-}
+  const tokenGenerate = generateToken(
+    { username: payload.username },
+    config.jwt.two_fa_token as Secret,
+    config.jwt.two_fa_expires_in as string,
+  );
+
+  return { twoFactorToken: tokenGenerate };
+};
 
 const twoFactorRegister = async (payload: TTwoFA) => {
   const findTwoFa = await TwoFA.findOne({ username: payload.username });
@@ -260,7 +265,7 @@ const twoFactorRegister = async (payload: TTwoFA) => {
   const twoFa = new TwoFA(payload);
   await twoFa.save();
   return true;
-}
+};
 
 export const AuthService = {
   resendOtp,
@@ -270,5 +275,5 @@ export const AuthService = {
   forgotPassword,
   changePassword,
   twoFactorLogin,
-  twoFactorRegister
+  twoFactorRegister,
 };

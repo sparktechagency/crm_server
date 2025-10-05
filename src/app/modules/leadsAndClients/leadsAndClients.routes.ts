@@ -36,7 +36,12 @@ router
   )
   .patch(
     '/actions/:id',
-    auth(USER_ROLE.admin, USER_ROLE.hr, USER_ROLE.hubManager, USER_ROLE.fieldOfficer),
+    auth(
+      USER_ROLE.admin,
+      USER_ROLE.hr,
+      USER_ROLE.hubManager,
+      USER_ROLE.fieldOfficer,
+    ),
     LeadsAndClientsController.updateUserActions,
   )
   .delete(

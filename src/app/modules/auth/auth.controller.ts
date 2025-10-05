@@ -91,8 +91,8 @@ const twoFactorLogin = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     message: 'User logged in successfully',
     data: result,
-  })
-})
+  });
+});
 
 const twoFactorRegister = catchAsync(async (req, res) => {
   const result = await AuthService.twoFactorRegister(req.body);
@@ -101,8 +101,8 @@ const twoFactorRegister = catchAsync(async (req, res) => {
     statusCode: httpStatus.OK,
     message: 'User registered successfully',
     data: result,
-  })
-})
+  });
+});
 
 export const AuthController = {
   resendOtp,
@@ -112,5 +112,5 @@ export const AuthController = {
   changePassword,
   forgotPassword,
   twoFactorLogin,
-  twoFactorRegister
+  twoFactorRegister,
 };

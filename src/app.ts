@@ -23,7 +23,11 @@ app.use(cookieParser());
 
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173', "https://tndk.app"],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'https://tndk.app',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   }),

@@ -269,7 +269,6 @@ const updateUserActions = async (
   payload: { action: 'blocked' | 'active' },
   authUser: TAuthUser,
 ): Promise<LeadsAndClients | null> => {
-
   const { action } = payload;
 
   const leadsAndClients = await LeadsAndClientsModel.findById(id);
@@ -278,7 +277,10 @@ const updateUserActions = async (
   }
 
   if (leadsAndClients.status === action) {
-    throw new AppError(httpStatus.BAD_REQUEST, `leadsAndClients already ${action}`);
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      `leadsAndClients already ${action}`,
+    );
   }
 
   switch (action) {
@@ -295,7 +297,7 @@ const updateUserActions = async (
   }
 
   return leadsAndClients;
-}
+};
 export const LeadsAndClientsService = {
   createLeadsAndClients,
   getAllLeadsAndClients,
@@ -304,5 +306,5 @@ export const LeadsAndClientsService = {
   getLeadsUsingUId,
   getAllClients,
   deleteClient,
-  updateUserActions
+  updateUserActions,
 };

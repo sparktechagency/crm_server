@@ -32,6 +32,9 @@ export default {
     refresh_expires_in: process.env.REFRESH_EXPIRE_IN,
     reset_password_token: process.env.RESET_PASSWORD_KEY,
     reset_password_expires_in: process.env.RESET_PASSWORD_EXPIRE_IN,
+    //TWO FA
+    two_fa_token: process.env.TWO_FA_KEY,
+    two_fa_expires_in: process.env.TWO_FA_EXPIRE_IN,
   },
 
   otp_expire_in: process.env.OTP_EXPIRE_IN,

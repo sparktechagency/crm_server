@@ -105,7 +105,6 @@ const updateUserActions = catchAsync(async (req, res) => {
   });
 });
 
-
 export const LeadsAndClientsController = {
   createLeadsAndClients,
   getLeadsAndClients,
@@ -113,5 +112,5 @@ export const LeadsAndClientsController = {
   deleteLeadsOrClients,
   getAllClients,
   deleteClient,
-  updateUserActions
+  updateUserActions,
 };

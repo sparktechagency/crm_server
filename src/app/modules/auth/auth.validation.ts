@@ -8,7 +8,7 @@ const otpValidation = z.object({
 
 const loginValidation = z.object({
   body: z.object({
-    email: z.string({ required_error: 'Email is required' }).email().max(50),
+    uid: z.string({ required_error: 'uid is required' }).max(50),
     password: z.string({ required_error: 'Password is required' }).min(8),
   }),
 });

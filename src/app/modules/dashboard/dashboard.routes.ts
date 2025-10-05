@@ -70,9 +70,11 @@ router
     '/admin_dashboard_count',
     auth(USER_ROLE.admin),
     dashboardController.adminDashboardCount,
-  ).get("/spoke_analytics/:spokeId",
+  )
+  .get(
+    '/spoke_analytics/:spokeId',
     auth(USER_ROLE.admin, USER_ROLE.hubManager),
-    dashboardController.seeSpokeManageAnalytics
+    dashboardController.seeSpokeManageAnalytics,
   );
 
 export const DashboardRoutes = router;

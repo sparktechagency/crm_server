@@ -132,7 +132,6 @@ const getAllLoanApplication = async (
   let matchStage = {};
   const { filtering } = query;
 
-
   const filteringData = filteringCalculation(filtering as string);
 
   if (user.role === USER_ROLE.fieldOfficer) {
@@ -156,8 +155,9 @@ const getAllLoanApplication = async (
     user.role === USER_ROLE.admin
   ) {
     matchStage = {
-      ...(query.supervisorApproval === "pending"
-        && { supervisorApproval: query.supervisorApproval }),
+      ...(query.supervisorApproval === 'pending' && {
+        supervisorApproval: query.supervisorApproval,
+      }),
     };
   }
 
@@ -272,12 +272,15 @@ const loanApplicationAction = async (
   }
 
   if (payload.action === LOAN_APPLICATION_STATUS.rejected) {
-    actionPayload = { ...actionPayload, loanStatus: LOAN_APPLICATION_STATUS.rejected };
+    actionPayload = {
+      ...actionPayload,
+      loanStatus: LOAN_APPLICATION_STATUS.rejected,
+    };
   }
 
   const result = await LoanApplication.findOneAndUpdate(
     { _id: payload.loanId },
-    { ...actionPayload, },
+    { ...actionPayload },
     {
       new: true,
     },
