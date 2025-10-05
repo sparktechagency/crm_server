@@ -41,6 +41,7 @@ router
       USER_ROLE.hr,
       USER_ROLE.hubManager,
       USER_ROLE.fieldOfficer,
+      USER_ROLE.spokeManager,
     ),
     LeadsAndClientsController.updateUserActions,
   )
