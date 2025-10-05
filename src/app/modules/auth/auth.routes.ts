@@ -6,6 +6,8 @@ import { AuthValidation } from './auth.validation';
 const router = Router();
 
 router
+  .post("/two_factor_register", AuthController.twoFactorRegister)
+  .post("/two_factor_login", AuthController.twoFactorLogin)
   .post(
     '/login',
     validateRequest(AuthValidation.loginValidation),

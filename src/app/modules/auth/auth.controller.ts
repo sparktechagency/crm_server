@@ -84,6 +84,26 @@ const resendOtp = catchAsync(async (req, res) => {
   });
 });
 
+const twoFactorLogin = catchAsync(async (req, res) => {
+  const result = await AuthService.twoFactorLogin(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User logged in successfully',
+    data: result,
+  })
+})
+
+const twoFactorRegister = catchAsync(async (req, res) => {
+  const result = await AuthService.twoFactorRegister(req.body);
+  sendResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: 'User registered successfully',
+    data: result,
+  })
+})
+
 export const AuthController = {
   resendOtp,
   verifyOtp,
@@ -91,4 +111,6 @@ export const AuthController = {
   resetPassword,
   changePassword,
   forgotPassword,
+  twoFactorLogin,
+  twoFactorRegister
 };
