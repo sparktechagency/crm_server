@@ -145,36 +145,37 @@ const supervisorDashboardOverview = async (
     year as string,
   );
 
-
   // Run all async operations concurrently
-  const [totalApplicationApprove, totalApplicationRejected, totalApplicationPending, allApplicationCount, totalApplication] =
-    await Promise.all([
+  const [
+    totalApplicationApprove,
+    totalApplicationRejected,
+    totalApplicationPending,
+    allApplicationCount,
+    totalApplication,
+  ] = await Promise.all([
+    LoanApplication.countDocuments({
+      supervisorApproval: LOAN_APPLICATION_STATUS.approved,
+    }),
 
-      LoanApplication.countDocuments({
-        supervisorApproval: LOAN_APPLICATION_STATUS.approved,
-      }),
+    LoanApplication.countDocuments({
+      supervisorApproval: LOAN_APPLICATION_STATUS.rejected,
+    }),
 
-      LoanApplication.countDocuments({
-        supervisorApproval: LOAN_APPLICATION_STATUS.rejected,
-      }),
+    LoanApplication.countDocuments({
+      supervisorApproval: LOAN_APPLICATION_STATUS.pending,
+    }),
 
+    LoanApplication.countDocuments({}),
 
-      LoanApplication.countDocuments({
-        supervisorApproval: LOAN_APPLICATION_STATUS.pending,
-      }),
-
-      LoanApplication.countDocuments({
-      }),
-
-      LoanApplication.aggregate([
-        {
-          $match: {
-            createdAt: { $gte: startDate, $lte: endDate },
-          },
+    LoanApplication.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate },
         },
-        ...commonPipeline,
-      ]),
-    ]);
+      },
+      ...commonPipeline,
+    ]),
+  ]);
 
   // Format the aggregated result
   const formattedResult = StatisticHelper.formattedResult(
@@ -229,7 +230,8 @@ const hubManagerDashboardCount = async (user: TAuthUser) => {
   return {
     totalClients,
     totalApplication,
-    totalCollection: totalCollection.length > 0 ? totalCollection[0].total.toFixed(2) : 0,
+    totalCollection:
+      totalCollection.length > 0 ? totalCollection[0].total.toFixed(2) : 0,
     totalOverdue: totalOverdue.length > 0 ? totalOverdue[0].total : 0,
   };
 };
@@ -250,8 +252,8 @@ const hubManagerCollectionReport = async (
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-          }
+              fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+            }
           : {};
 
   const result = await Repayments.aggregate([
@@ -384,8 +386,8 @@ const allFieldOfficerCollection = async (
         ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-            spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
-          }
+              spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+            }
           : {};
 
   const result = await repaymentQuery
@@ -492,12 +494,12 @@ const spokeManagerCount = async (user: TAuthUser) => {
   const userId =
     user.role === USER_ROLE.spokeManager
       ? {
-        spokeId: new mongoose.Types.ObjectId(String(user._id)),
-      }
+          spokeId: new mongoose.Types.ObjectId(String(user._id)),
+        }
       : user.role === USER_ROLE.fieldOfficer
         ? {
-          fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-        }
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          }
         : user.role === USER_ROLE.hubManager
           ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
           : {};
@@ -508,27 +510,28 @@ const spokeManagerCount = async (user: TAuthUser) => {
   };
 
   // Fetch both amounts in parallel to optimize time
-  const [todayCollectionAmount, overdueAmount, allLeads, allCleints] = await Promise.all([
-    getAggregateAmount(user, matchCriteria, '$installmentAmount'),
-    getAggregateAmount(
-      user,
-      { ...matchCriteria, status: 'overdue' },
-      '$penalty',
-    ),
-    LeadsAndClientsModel.countDocuments({
-      spokeId: user._id
-    }),
-    LeadsAndClientsModel.countDocuments({
-      spokeId: user._id,
-      isClient: true
-    })
-  ]);
+  const [todayCollectionAmount, overdueAmount, allLeads, allCleints] =
+    await Promise.all([
+      getAggregateAmount(user, matchCriteria, '$installmentAmount'),
+      getAggregateAmount(
+        user,
+        { ...matchCriteria, status: 'overdue' },
+        '$penalty',
+      ),
+      LeadsAndClientsModel.countDocuments({
+        spokeId: user._id,
+      }),
+      LeadsAndClientsModel.countDocuments({
+        spokeId: user._id,
+        isClient: true,
+      }),
+    ]);
 
   return {
     todayCollection: todayCollectionAmount,
     overdue: overdueAmount,
     allLeads,
-    allCleints
+    allCleints,
   };
 };
 
@@ -552,70 +555,69 @@ const adminDashboardCount = async (user: TAuthUser) => {
 
 const seeSpokeManageAnalytics = async (userId: string) => {
   // Fetch both amounts in parallel to optimize time
-  const [todayCollectionAmount, overdueAmount, fieldOfficers, clients] = await Promise.all([
-    await Repayments.aggregate([
-      {
-        $match: {
-          spokeId: new mongoose.Types.ObjectId(String(userId)),
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          amount: {
-            $sum: '$installmentAmount',
+  const [todayCollectionAmount, overdueAmount, fieldOfficers, clients] =
+    await Promise.all([
+      await Repayments.aggregate([
+        {
+          $match: {
+            spokeId: new mongoose.Types.ObjectId(String(userId)),
           },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          amount: 1,
-        },
-      },
-    ]),
-    await Repayments.aggregate([
-      {
-        $match: {
-          spokeId: new mongoose.Types.ObjectId(String(userId)),
-          status: 'overdue'
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          amount: {
-            $sum: '$penalty',
+        {
+          $group: {
+            _id: null,
+            amount: {
+              $sum: '$installmentAmount',
+            },
           },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          amount: 1,
+        {
+          $project: {
+            _id: 0,
+            amount: 1,
+          },
         },
-      },
-    ]),
-    User.countDocuments({
-      role: USER_ROLE.fieldOfficer,
-      spokeId: userId
-    }),
-    LeadsAndClientsModel.countDocuments({
-      spokeId: userId,
-      isClient: true
-    })
-
-  ]);
+      ]),
+      await Repayments.aggregate([
+        {
+          $match: {
+            spokeId: new mongoose.Types.ObjectId(String(userId)),
+            status: 'overdue',
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            amount: {
+              $sum: '$penalty',
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            amount: 1,
+          },
+        },
+      ]),
+      User.countDocuments({
+        role: USER_ROLE.fieldOfficer,
+        spokeId: userId,
+      }),
+      LeadsAndClientsModel.countDocuments({
+        spokeId: userId,
+        isClient: true,
+      }),
+    ]);
 
   return {
-    todayCollection: todayCollectionAmount.length > 0 ? todayCollectionAmount[0].amount : 0,
+    todayCollection:
+      todayCollectionAmount.length > 0 ? todayCollectionAmount[0].amount : 0,
     overdue: overdueAmount.length > 0 ? overdueAmount[0].amount : 0,
     fieldOfficers,
-    clients
+    clients,
   };
-
-
-}
+};
 
 export const dashboardService = {
   fieldOfficerDashboardCount,
@@ -628,5 +630,5 @@ export const dashboardService = {
   allFieldOfficerCollection,
   spokeManagerCount,
   adminDashboardCount,
-  seeSpokeManageAnalytics
+  seeSpokeManageAnalytics,
 };

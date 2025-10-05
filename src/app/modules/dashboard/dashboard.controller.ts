@@ -130,10 +130,9 @@ const adminDashboardCount = catchAsync(async (req, res) => {
   });
 });
 
-
 const seeSpokeManageAnalytics = catchAsync(async (req, res) => {
   const result = await dashboardService.seeSpokeManageAnalytics(
-    req.params.spokeId
+    req.params.spokeId,
   );
   sendResponse(res, {
     success: true,
@@ -154,5 +153,5 @@ export const dashboardController = {
   allFieldOfficerCollection,
   spokeManagerCount,
   adminDashboardCount,
-  seeSpokeManageAnalytics
+  seeSpokeManageAnalytics,
 };

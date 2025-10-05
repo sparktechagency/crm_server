@@ -12,7 +12,7 @@ export type LeadsAndClients = {
   isClient: boolean;
   isDeleted: boolean;
   customFields: Map<string, unknown>;
-  status: TStatus
+  status: TStatus;
 };
 
 export interface IReturnTypeLeadsAndClients extends LeadsAndClients {

@@ -21,7 +21,7 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      
+
       trim: true,
     },
     phoneNumber: {
