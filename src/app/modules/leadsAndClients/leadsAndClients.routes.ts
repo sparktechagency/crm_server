@@ -19,12 +19,12 @@ router
   )
   .get(
     '/',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin, USER_ROLE.spokeManager),
     LeadsAndClientsController.getLeadsAndClients,
   )
   .get(
     '/all_clients',
-    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin),
+    auth(USER_ROLE.fieldOfficer, USER_ROLE.hubManager, USER_ROLE.admin, USER_ROLE.spokeManager),
     LeadsAndClientsController.getAllClients,
   )
   .patch(

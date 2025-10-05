@@ -88,7 +88,13 @@ const getAllLeadsAndClients = async (
       hubId: new mongoose.Types.ObjectId(String(user._id)),
       isClient: false,
     };
-  } else if (user.role === USER_ROLE.admin) {
+  }
+  else if (user.role === USER_ROLE.spokeManager) {
+    matchStage = {
+      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    };
+  }
+  else if (user.role === USER_ROLE.admin) {
     matchStage = {
       isClient: false,
     };
@@ -202,7 +208,13 @@ const getAllClients = async (
     matchStage = {
       hubId: new mongoose.Types.ObjectId(String(user._id)),
     };
-  } else if (user.role === USER_ROLE.admin) {
+  }
+   else if(user.role === USER_ROLE.spokeManager) {
+    matchStage = {
+      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+    };
+   }
+  else if (user.role === USER_ROLE.admin) {
     matchStage = {};
   }
 
