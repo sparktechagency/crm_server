@@ -12,6 +12,8 @@ import { isMatchedPassword } from '../../utils/matchPassword';
 import { OtpService } from '../otp/otp.service';
 import { TUser } from '../user/user.interface';
 import User from '../user/user.model';
+import { TTwoFA } from '../twoFA/twoFA.interface';
+import { TwoFA } from '../twoFA/twoFA.model';
 
 const loginUser = async (payload: Pick<TUser, 'email' | 'password'>) => {
   const { email, password } = payload;
@@ -228,6 +230,38 @@ const resendOtp = async (
   );
 };
 
+
+const twoFactorLogin = async (payload: TTwoFA) => {
+  const findTwoFa = await TwoFA.findOne({ username: payload.username });
+
+  if (!findTwoFa) {
+    throw new AppError(httpStatus.NOT_FOUND, 'TwoFA not found');
+  }
+
+  const matchPassword = await isMatchedPassword(
+    payload.password,
+    findTwoFa?.password,
+  );
+
+  if (!matchPassword) {
+    throw new AppError(httpStatus.FORBIDDEN, 'password not matched');
+  }
+
+  return true;
+}
+
+const twoFactorRegister  = async (payload: TTwoFA) => {
+  const findTwoFa = await TwoFA.findOne({ username: payload.username });
+
+  if (findTwoFa) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'TwoFA already exist');
+  }
+
+  const twoFa = new TwoFA(payload);
+  await twoFa.save();
+  return true;
+}
+
 export const AuthService = {
   resendOtp,
   loginUser,
@@ -235,4 +269,6 @@ export const AuthService = {
   resetPassword,
   forgotPassword,
   changePassword,
+  twoFactorLogin,
+  twoFactorRegister
 };
