@@ -82,6 +82,7 @@ const getAllLeadsAndClients = async (
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
       fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+      isClient: false,
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
@@ -92,6 +93,7 @@ const getAllLeadsAndClients = async (
   else if (user.role === USER_ROLE.spokeManager) {
     matchStage = {
       spokeId: new mongoose.Types.ObjectId(String(user._id)),
+      isClient: false,
     };
   }
   else if (user.role === USER_ROLE.admin) {
@@ -209,11 +211,11 @@ const getAllClients = async (
       hubId: new mongoose.Types.ObjectId(String(user._id)),
     };
   }
-   else if(user.role === USER_ROLE.spokeManager) {
+  else if (user.role === USER_ROLE.spokeManager) {
     matchStage = {
       spokeId: new mongoose.Types.ObjectId(String(user._id)),
     };
-   }
+  }
   else if (user.role === USER_ROLE.admin) {
     matchStage = {};
   }

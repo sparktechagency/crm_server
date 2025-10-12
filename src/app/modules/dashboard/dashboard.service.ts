@@ -198,14 +198,18 @@ const hubManagerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
 
   // Run all async operations concurrently using Promise.all
-  const [totalClients, totalApplication, totalCollection, totalOverdue] =
+  const [totalClients, totalLeads, totalApplication, totalCollection, totalOverdue, approvedApplication, rejectedApplication, pendingApplication] =
     await Promise.all([
       // Total clients
       LeadsAndClientsModel.countDocuments({
         hubId: userId,
         isClient: true,
       }),
-
+      // Total clients
+      LeadsAndClientsModel.countDocuments({
+        hubId: userId,
+        isClient: false,
+      }),
       // Total applications
       LoanApplication.countDocuments({
         hubId: userId,
@@ -224,12 +228,31 @@ const hubManagerDashboardCount = async (user: TAuthUser) => {
         { $group: { _id: null, total: { $sum: '$penalty' } } },
         { $project: { _id: 0, total: 1 } },
       ]),
+
+       // Total approved applications
+      LoanApplication.countDocuments({
+        hubId: userId,
+        hubManagerApproval: "approved"
+      }),
+       // Total rejected applications
+      LoanApplication.countDocuments({
+        hubId: userId,
+        hubManagerApproval: "rejected"
+      }),
+      LoanApplication.countDocuments({
+        hubId: userId,
+        hubManagerApproval: "pending"
+      }),
     ]);
 
   // Return the results, ensuring that collection and overdue have defaults if empty
   return {
     totalClients,
+    totalLeads,
     totalApplication,
+    approvedApplication, 
+    rejectedApplication,
+    pendingApplication,
     totalCollection:
       totalCollection.length > 0 ? totalCollection[0].total.toFixed(2) : 0,
     totalOverdue: totalOverdue.length > 0 ? totalOverdue[0].total : 0,

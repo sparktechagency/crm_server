@@ -237,6 +237,10 @@ const twoFactorLogin = async (payload: TTwoFA) => {
     throw new AppError(httpStatus.NOT_FOUND, 'TwoFA not found');
   }
 
+  // if (findTwoFa && !findTwoFa.isApprove) { 
+  //   throw new AppError(httpStatus.BAD_REQUEST, "TWO FA not Approved")
+  // }
+
   const matchPassword = await isMatchedPassword(
     payload.password,
     findTwoFa?.password,
