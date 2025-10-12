@@ -10,6 +10,7 @@ const twoFaSchema = new Schema<TTwoFA>(
       unique: true,
       trim: true,
     },
+    isApprove: {type: Boolean, default: false},
     password: { type: String, required: [true, 'Password is required'] },
   },
   {
