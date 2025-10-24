@@ -1,19 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
+import mongoose from 'mongoose';
 import { passwordSend } from '../../../shared/html/passwordSendingHtml';
 import sendNotification from '../../../socket/sendNotification';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import generateUID from '../../utils/generateUID';
 import sendMail from '../../utils/sendMail';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TFindUserWithUid } from './user.interface';
 import User from './user.model';
 import { findUserWithUid, uidForUserRole } from './user.utils';
-import mongoose from 'mongoose';
-import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createUsers = async (
   payload: Record<string, unknown>,
