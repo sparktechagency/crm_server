@@ -1,4 +1,4 @@
-export const passwordSend = (generatePassword: number) => {
+export const passwordSend = (generatePassword: number, uid: string) => {
   return `
       <!DOCTYPE html>
     <html lang="en">
@@ -15,6 +15,10 @@ export const passwordSend = (generatePassword: number) => {
             <p style="font-size: 16px; color: #34495e; line-height: 1.6; margin: 0 0 30px;">
               Hello,<br><br>
               For security reasons, please change your password as soon as possible.
+            </p>
+            <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 0 0 30px;">
+              Your User ID is:<br>
+              <span style="font-size: 22px; font-family: monospace;">${uid}</span>
             </p>
             <p style="font-size: 18px; font-weight: bold; color: #e74c3c; margin: 0 0 30px;">
               Your temporary password is:<br>
