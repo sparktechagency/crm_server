@@ -43,7 +43,7 @@ const createUsers = async (
   await sendMail({
     email: payload.email as string,
     subject: 'Change Your Password Please',
-    html: passwordSend(generatePassword),
+    html: passwordSend(generatePassword, uid as string),
   });
 
   const createUser = await User.create(userData);
