@@ -16,13 +16,13 @@ import sendNotification from '../../../socket/sendNotification';
 import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import AppError from '../../utils/AppError';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import { TLocationProfile } from '../locationProfile/locationProfile.interface';
 import LocationProfile from '../locationProfile/locationProfile.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import User from '../user/user.model';
 import { installmentAmountCalculator } from './loanApplication.utils';
-import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createLoanApplication = async (
   user: TAuthUser,
