@@ -13,7 +13,7 @@ import sendMail from '../../utils/sendMail';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TFindUserWithUid } from './user.interface';
 import User from './user.model';
-import { findUserWithUid, uidForUserRole } from './user.utils';
+import { findUserWithUid } from './user.utils';
 
 const createUsers = async (
   payload: Record<string, unknown>,
@@ -22,12 +22,11 @@ const createUsers = async (
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
   const { email, phoneNumber, role, spokeUid, hubUid, ...rest } = payload;
 
-  const uidKey = uidForUserRole(payload.role as string);
   const uid = hubUid ? hubUid : spokeUid;
   const data = (await findUserWithUid(uid as string)) as TFindUserWithUid;
 
   const userData = {
-    uid: await generateUID(User, uidKey),
+    uid: await generateUID(User),
     password: generatePassword,
     email,
     ...data,
@@ -43,7 +42,7 @@ const createUsers = async (
   await sendMail({
     email: payload.email as string,
     subject: 'Change Your Password Please',
-    html: passwordSend(generatePassword, uid as string),
+    html: passwordSend(generatePassword, userData.uid as string),
   });
 
   const createUser = await User.create(userData);

@@ -6,6 +6,7 @@ import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import AppError from '../../utils/AppError';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import generateUID from '../../utils/generateUID';
 import { TMeta } from '../../utils/sendResponse';
 import { transactionWrapper } from '../../utils/transactionWrapper';
@@ -16,7 +17,6 @@ import {
   LeadsAndClients,
 } from './leadsAndClients.interface';
 import LeadsAndClientsModel from './leadsAndClients.model';
-import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createLeadsAndClients = async (
   payload: Record<string, unknown>,
