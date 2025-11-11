@@ -26,7 +26,7 @@ const createUsers = async (
   const data = (await findUserWithUid(uid as string)) as TFindUserWithUid;
 
   const userData = {
-    uid: await generateUID(User),
+    uid: payload.uid,
     password: generatePassword,
     email,
     ...data,
