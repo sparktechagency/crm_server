@@ -119,6 +119,7 @@ const getUsersBaseOnRole = async (
       : user.role === USER_ROLE.spokeManager
         ? { locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)) }
         : {};
+  
 
   const userQuery = new AggregationQueryBuilder(query);
 
