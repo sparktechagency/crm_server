@@ -10,10 +10,10 @@ import { decodeToken } from '../../utils/decodeToken';
 import generateToken from '../../utils/generateToken';
 import { isMatchedPassword } from '../../utils/matchPassword';
 import { OtpService } from '../otp/otp.service';
-import { TUser } from '../user/user.interface';
-import User from '../user/user.model';
 import { TTwoFA } from '../twoFA/twoFA.interface';
 import { TwoFA } from '../twoFA/twoFA.model';
+import { TUser } from '../user/user.interface';
+import User from '../user/user.model';
 
 const loginUser = async (payload: Pick<TUser, 'uid' | 'password'>) => {
   const { uid, password } = payload;
@@ -32,9 +32,9 @@ const loginUser = async (payload: Pick<TUser, 'uid' | 'password'>) => {
   if (user.status === USER_STATUS.blocked) {
     throw new AppError(httpStatus.FORBIDDEN, 'This user is blocked!');
   }
-
+  
   // Step 3: Check password
-  const isPasswordValid = await isMatchedPassword(password, user.password);
+  const isPasswordValid = await User.isMatchedPassword(password, user.password);
   if (!isPasswordValid) {
     throw new AppError(httpStatus.FORBIDDEN, 'Password not matched!');
   }

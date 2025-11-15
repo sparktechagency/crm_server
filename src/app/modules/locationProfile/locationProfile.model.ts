@@ -9,10 +9,9 @@ const locationProfileSchema = new Schema<
   LocationProfileModal
 >(
   {
-    hubId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: [true, 'Hub id is required'],
+    locationProfileHubId: {
+      type: String,
+      required: [true, 'Location profile hub id is required'],
       unique: true,
     },
     uid: {

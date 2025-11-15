@@ -29,12 +29,15 @@ const seedAdmin = async () => {
         try {
             const created = await User.create(admin);
             console.log(created, "response");
-            console.log(colors.green('Admin created successfully')); await sendMail({
-                email: config.admin.admin_email as string,
-                subject: 'Change Your Password Please',
-                html: passwordSend(generatePassword, admin.uid as string),
-            });
-            
+            console.log(colors.green('Admin created successfully'));
+            if (created) {
+                await sendMail({
+                    email: config.admin.admin_email as string,
+                    subject: 'Change Your Password Please',
+                    html: passwordSend(generatePassword, admin.uid as string),
+                });
+            }
+
         } catch (error) {
             throw new AppError(httpStatus.INTERNAL_SERVER_ERROR, 'Admin not created');
         }

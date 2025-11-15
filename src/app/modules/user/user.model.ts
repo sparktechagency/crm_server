@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import bcrypt from 'bcrypt';
 import mongoose, { Schema } from 'mongoose';
-import { TUser, UserModel } from './user.interface';
 import { USER_ROLE, USER_STATUS } from '../../constant';
+import { TUser, UserModel } from './user.interface';
 
 export const userSchema = new mongoose.Schema<TUser, UserModel>(
   {
@@ -30,15 +30,15 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       unique: true,
       trim: true,
     },
-    hubId: {
+    locationProfileHubId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationProfile',
     },
-    hubUid: { type: String },
-    spokeUid: { type: String },
-    spokeId: {
+    locationProfileHubUid: { type: String },
+    locationSpokeUid: { type: String },
+    locationSpokeId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationSpoke',
     },
     status: {
       type: String,

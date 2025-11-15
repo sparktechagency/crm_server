@@ -7,6 +7,7 @@ import { LeadsAndClientsFieldRoutes } from '../modules/leadsAndClients/leadsAndC
 import { LoanApplicationRoutes } from '../modules/loanApplication/loanApplication.routes';
 import { LoansRoutes } from '../modules/loans/loans.routes';
 import { LocationProfileRoutes } from '../modules/locationProfile/locationProfile.routes';
+import { LocationSpokeRoutes } from '../modules/locationSpoke/locationSpoke.routes';
 import { NotificationRoutes } from '../modules/notification/notification.routes';
 import { RepaymentsRoutes } from '../modules/repayments/repayments.routes';
 import { RepaymentsFieldRoutes } from '../modules/repayments/repaymentsField/repaymentsField.routes';
@@ -44,6 +45,10 @@ const routes: TRoutes[] = [
   {
     path: '/loans',
     route: LoansRoutes,
+  },
+  {
+    path: '/location_spoke',
+    route: LocationSpokeRoutes,
   },
   {
     path: '/leads_and_clients',

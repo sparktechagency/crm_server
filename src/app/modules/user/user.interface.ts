@@ -19,10 +19,10 @@ export type TUser = {
   image: string;
   address: string;
   nid: string;
-  hubId: ObjectId;
-  spokeId: ObjectId;
-  hubUid: string;
-  spokeUid: string;
+  locationProfileHubId: ObjectId;
+  locationSpokeId: ObjectId;
+  locationProfileHubUid: string;
+  locationSpokeUid: string;
   cv: string;
   isDeleted: boolean;
   isAssignSpoke: boolean;

@@ -1,7 +1,7 @@
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
 
 export type TLocationProfile = {
-  hubId: ObjectId;
+  locationProfileHubId: string;
   uid: string;
   hubUid: string;
   locationName: string;

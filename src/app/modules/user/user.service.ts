@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
 import mongoose from 'mongoose';
@@ -8,7 +9,6 @@ import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
 import { filteringCalculation } from '../../utils/filteringCalculation';
-import generateUID from '../../utils/generateUID';
 import sendMail from '../../utils/sendMail';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TFindUserWithUid } from './user.interface';
@@ -80,6 +80,7 @@ const createUsers = async (
 const updateUserActions = async (
   id: string,
   action: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   authUser: TAuthUser,
 ): Promise<any> => {
   const user = await User.findById(id);
