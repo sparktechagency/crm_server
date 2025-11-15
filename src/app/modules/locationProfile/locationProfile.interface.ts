@@ -3,7 +3,6 @@ import { Model } from 'mongoose';
 export type TLocationProfile = {
   locationProfileHubId: string;
   uid: string;
-  hubUid: string;
   locationName: string;
   locationId: string;
   email: string;

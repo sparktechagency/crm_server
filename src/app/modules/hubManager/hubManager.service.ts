@@ -21,7 +21,7 @@ const allFieldOfficerRequest = async (
     matchStage = {};
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: user._id,
+      locationProfileHubId: user.locationProfileHubId,
     };
   }
 

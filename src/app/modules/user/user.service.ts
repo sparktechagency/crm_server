@@ -10,30 +10,25 @@ import { TAuthUser } from '../../interface/authUser';
 import AppError from '../../utils/AppError';
 import { filteringCalculation } from '../../utils/filteringCalculation';
 import sendMail from '../../utils/sendMail';
+import LocationSpoke from '../locationSpoke/location.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
-import { TFindUserWithUid } from './user.interface';
 import User from './user.model';
-import { findUserWithUid } from './user.utils';
 
 const createUsers = async (
   payload: Record<string, unknown>,
   user: TAuthUser,
 ) => {
   const generatePassword = Math.floor(10000000 + Math.random() * 90000000);
-  const { email, phoneNumber, role, spokeUid, hubUid, ...rest } = payload;
-
-  const uid = hubUid ? hubUid : spokeUid;
-  const data = (await findUserWithUid(uid as string)) as TFindUserWithUid;
+  const { email, phoneNumber, role, uid, locationProfileHubId, locationSpokeId, ...rest } = payload;
 
   const userData = {
-    uid: payload.uid,
+    uid: uid,
     password: generatePassword,
     email,
-    ...data,
     phoneNumber,
     role,
-    hubUid,
-    spokeUid,
+    locationProfileHubId,
+    locationSpokeId,
     customFields: {
       ...rest,
     },
@@ -48,13 +43,13 @@ const createUsers = async (
   const createUser = await User.create(userData);
 
   let receiverIds: any;
-  if (role === USER_ROLE.fieldOfficer) {
-    receiverIds = [user.adminId, data?.hubId, data?.spokeId];
-  } else if (role === USER_ROLE.spokeManager) {
-    receiverIds = [user.adminId, data.hubId];
-  } else if (role === USER_ROLE.hubManager) {
-    receiverIds = [user.adminId];
-  }
+  // if (role === USER_ROLE.fieldOfficer) {
+  //   receiverIds = [user.adminId, data?.hubId, data?.spokeId];
+  // } else if (role === USER_ROLE.spokeManager) {
+  //   receiverIds = [user.adminId, data.hubId];
+  // } else if (role === USER_ROLE.hubManager) {
+  //   receiverIds = [user.adminId];
+  // }
 
   if (user.role === USER_ROLE.admin) {
     return createUser;
@@ -120,9 +115,9 @@ const getUsersBaseOnRole = async (
 
   const matchStage: Record<string, unknown> =
     user.role === USER_ROLE.hubManager
-      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      ? { locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)) }
       : user.role === USER_ROLE.spokeManager
-        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        ? { locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)) }
         : {};
 
   const userQuery = new AggregationQueryBuilder(query);
@@ -154,37 +149,38 @@ const updateUsers = async (id: string, payload: Record<string, unknown>) => {
   const { email, phoneNumber, ...rest } = payload;
 
   const updateQuery: Record<string, any> = {};
+
+  // Update only custom fields
   for (const key in rest) {
     updateQuery[`customFields.${key}`] = rest[key];
   }
 
-  const userData = {
-    email,
-    phoneNumber,
-    ...updateQuery,
-  };
+  // Build final update object safely
+  const userData: Record<string, any> = { ...updateQuery };
+
+  if (email !== undefined) userData.email = email;
+  if (phoneNumber !== undefined) userData.phoneNumber = phoneNumber;
 
   const result = await User.findByIdAndUpdate(id, userData, { new: true });
   return result;
 };
 
 const assignSpoke = async (payload: {
-  spokeUid: string;
+  locationSpokeId: string;
   fieldOfficerId: string;
 }) => {
-  const spokeManager = await User.findOne({ uid: payload.spokeUid });
-  if (!spokeManager) {
+  const spokeLocation = await LocationSpoke.findOne({ _id: payload.locationSpokeId });
+  if (!spokeLocation) {
     throw new AppError(
       httpStatus.NOT_FOUND,
-      'Spoke Manager not found with this uid',
+      'Spoke Location not found with this uid',
     );
   }
 
   const result = await User.findOneAndUpdate(
     { _id: payload.fieldOfficerId },
     {
-      spokeUid: payload.spokeUid,
-      spokeId: spokeManager._id,
+      locationSpokeId: payload.locationSpokeId,
       isAssignSpoke: true,
     },
     { new: true },

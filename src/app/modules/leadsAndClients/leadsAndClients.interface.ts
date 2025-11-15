@@ -4,8 +4,8 @@ import { TStatus } from '../user/user.interface';
 export type LeadsAndClients = {
   _id?: string;
   uid: string;
-  hubId: ObjectId;
-  spokeId: ObjectId;
+  locationProfileHubId: ObjectId;
+  locationSpokeId: ObjectId;
   fieldOfficerId: ObjectId;
   email: string;
   phoneNumber: string;

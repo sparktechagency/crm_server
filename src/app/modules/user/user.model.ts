@@ -34,11 +34,17 @@ export const userSchema = new mongoose.Schema<TUser, UserModel>(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'LocationProfile',
     },
-    locationProfileHubUid: { type: String },
-    locationSpokeUid: { type: String },
     locationSpokeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'LocationSpoke',
+    },
+    myHubId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    mySpokeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
     },
     status: {
       type: String,

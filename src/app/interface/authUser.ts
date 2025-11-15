@@ -6,8 +6,8 @@ export type TAuthUser = {
   uid: string;
   email: string;
   phoneNumber: string;
-  hubId: string;
-  hubUid: string;
+  locationProfileHubId: string;
+  locationSpokeId: string;
   status: TStatus;
   role: TRole;
   isDeleted: boolean;
@@ -16,8 +16,6 @@ export type TAuthUser = {
   createdAt: string;
   updatedAt: string;
   __v: number;
-  spokeId?: string;
-  spokeUid?: string;
   iat: number;
   exp: number;
   adminId: string;

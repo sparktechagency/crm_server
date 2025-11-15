@@ -12,6 +12,7 @@ import { TMeta } from '../../utils/sendResponse';
 import { transactionWrapper } from '../../utils/transactionWrapper';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
+import User from '../user/user.model';
 import {
   IReturnTypeLeadsAndClients,
   LeadsAndClients,
@@ -24,13 +25,12 @@ const createLeadsAndClients = async (
   session?: mongoose.ClientSession,
 ): Promise<LeadsAndClients> => {
   const { email, phoneNumber, ...rest } = payload;
-
   const leadClientData = {
     uid: await generateUID(LeadsAndClientsModel as any, 'ID'),
     email,
     phoneNumber,
-    hubId: user.hubId,
-    spokeId: user.spokeId,
+    locationProfileHubId: user.locationProfileHubId,
+    locationSpokeId: user.locationSpokeId,
     fieldOfficerId: user._id,
     customFields: {
       ...rest,
@@ -49,7 +49,20 @@ const createLeadsAndClients = async (
     result = doc as LeadsAndClients;
   }
 
-  const receiverId = [user.hubId, user.spokeId, user.adminId];
+  const [findFieldOffice, hubManagerId, spokeId] = await Promise.all([
+    User.findById(user._id) as any,
+    User.findOne({
+      locationProfileHubId: user.locationProfileHubId,
+      role: USER_ROLE.hubManager,
+    }),
+    User.findOne({
+      locationSpokeId: user.locationSpokeId,
+      role: USER_ROLE.spokeManager,
+    }),
+  ]);
+
+
+  const receiverId = [hubManagerId!._id, spokeId!._id, user.adminId];
 
   // Send notifications and wait for all to be completed
   await Promise.all(
@@ -60,7 +73,7 @@ const createLeadsAndClients = async (
         receiverId: id,
         linkId: result._id,
         role: user.role,
-        message: `${user.customFields.name} has added a new lead`,
+        message: `${findFieldOffice?.customFields?.name as any} has added a new lead`,
       };
 
       await sendNotification(user, notificationData);
@@ -202,18 +215,18 @@ const getAllClients = async (
   let matchStage = {};
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
-      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
       fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
     };
   }
   else if (user.role === USER_ROLE.spokeManager) {
     matchStage = {
-      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
     };
   }
   else if (user.role === USER_ROLE.admin) {

@@ -13,8 +13,8 @@ export type TLoanApplication = {
   _id?: string;
   // common
   clientId: ObjectId;
-  hubId: ObjectId;
-  spokeId: ObjectId;
+  locationProfileHubId: ObjectId;
+  locationSpokeId: ObjectId;
   fieldOfficerId: ObjectId;
   uid: string;
   leadUid: string;

@@ -14,14 +14,14 @@ const LeadsAndClientsSchema = new Schema<LeadsAndClients, ILeadsAndClients>(
       required: [true, 'Phone number is required'],
       unique: true,
     },
-    hubId: {
+    locationProfileHubId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationProfile',
       required: [true, 'Hub id is required'],
     },
-    spokeId: {
+    locationSpokeId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationSpoke',
       required: [true, 'Spoke id is required'],
     },
     fieldOfficerId: {

@@ -33,14 +33,14 @@ const LoanApplicationSchema = new Schema<TLoanApplication>(
       ref: 'LeadsAndClients',
       required: [true, 'Client id is required'],
     },
-    hubId: {
+    locationProfileHubId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationProfile',
       required: [true, 'Hub id is required'],
     },
-    spokeId: {
+    locationSpokeId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'LocationSpoke',
       required: [true, 'Spoke id is required'],
     },
     fieldOfficerId: {

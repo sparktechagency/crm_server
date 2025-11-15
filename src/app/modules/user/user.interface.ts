@@ -21,8 +21,8 @@ export type TUser = {
   nid: string;
   locationProfileHubId: ObjectId;
   locationSpokeId: ObjectId;
-  locationProfileHubUid: string;
-  locationSpokeUid: string;
+  myHubId: ObjectId;
+  mySpokeId: ObjectId;
   cv: string;
   isDeleted: boolean;
   isAssignSpoke: boolean;

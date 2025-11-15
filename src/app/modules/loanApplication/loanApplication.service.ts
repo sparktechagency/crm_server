@@ -42,7 +42,7 @@ const createLoanApplication = async (
     };
 
     const findHubForFormula = (await LocationProfile.findOne({
-      hubId: user.hubId,
+      _id: user.locationProfileHubId,
     })) as TLocationProfile;
 
     const amountCalculation = await installmentAmountCalculator(
@@ -68,8 +68,8 @@ const createLoanApplication = async (
     const loanApplicationInfo = {
       uid: await generateUID(LoanApplication, 'Application'),
       clientId: createLead._id,
-      hubId: user.hubId,
-      spokeId: user.spokeId,
+      locationProfileHubId: user.locationProfileHubId,
+      locationSpokeId: user.locationSpokeId,
       fieldOfficerId: user._id,
       leadUid: createLead.uid,
       installMentAmount: amountCalculation.installmentAmount,
@@ -93,9 +93,21 @@ const createLoanApplication = async (
       { session },
     );
 
-    const receiverId = [user.hubId, user.spokeId];
+    const [findFieldOffice, hubManagerId, spokeId] = await Promise.all([
+      User.findById(user._id) as any,
+      User.findOne({
+        locationProfileHubId: user.locationProfileHubId,
+        role: USER_ROLE.hubManager,
+      }),
+      User.findOne({
+        locationSpokeId: user.locationSpokeId,
+        role: USER_ROLE.spokeManager,
+      }),
+    ]);
 
-    console.log(receiverId, 'receiverId');
+
+    const receiverId = [hubManagerId!._id, spokeId!._id, user.adminId];
+
     // Send notifications and wait for all to be completed
     await Promise.all(
       receiverId.map(async (id) => {
@@ -105,7 +117,7 @@ const createLoanApplication = async (
           receiverId: id,
           linkId: loanApplication[0]?._id,
           role: user.role,
-          message: `${user.customFields.name} has added a new loan application`,
+          message: `${findFieldOffice.customFields.name} has added a new loan application`,
         };
 
         await sendNotification(user, notificationData);
@@ -136,13 +148,13 @@ const getAllLoanApplication = async (
 
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
-      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
       fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
       ...(query.supervisorApproval
         ? { supervisorApproval: query.supervisorApproval }
         : { supervisorApproval: LOAN_APPLICATION_STATUS.approved }),

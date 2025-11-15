@@ -11,18 +11,9 @@ const createLocationProfile = async (
   payload: TLocationProfile,
   user: TAuthUser,
 ) => {
-  const findHub = await User.findOne({
-    uid: payload.hubUid,
-  });
-
-  if (!findHub) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Hub not found');
-  }
-
   const createLocationProfile = await LocationProfile.create({
     ...payload,
     uid: await generateUID(LocationProfile, 'LP'),
-    hubId: findHub._id,
   });
 
   return createLocationProfile;
