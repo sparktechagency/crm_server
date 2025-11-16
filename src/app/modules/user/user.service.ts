@@ -201,6 +201,7 @@ const getAllManagers = async (
   user: TAuthUser,
   query: Record<string, unknown>,
 ) => {
+  console.log('query', query);
   const managersQuery = new AggregationQueryBuilder(query);
 
   const { filtering } = query;

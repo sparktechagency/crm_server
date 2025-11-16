@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { auth } from '../../middleware/auth';
 import { USER_ROLE } from '../../constant';
+import { auth } from '../../middleware/auth';
 import { dashboardController } from './dashboard.controller';
 
 const router = Router();
@@ -72,7 +72,7 @@ router
     dashboardController.adminDashboardCount,
   )
   .get(
-    '/spoke_analytics/:spokeId',
+    '/spoke_analytics/:locationSpokeId',
     auth(USER_ROLE.admin, USER_ROLE.hubManager),
     dashboardController.seeSpokeManageAnalytics,
   );

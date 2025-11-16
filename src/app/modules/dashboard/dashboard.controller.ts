@@ -132,7 +132,7 @@ const adminDashboardCount = catchAsync(async (req, res) => {
 
 const seeSpokeManageAnalytics = catchAsync(async (req, res) => {
   const result = await dashboardService.seeSpokeManageAnalytics(
-    req.params.spokeId,
+    req.params.locationSpokeId,
   );
   sendResponse(res, {
     success: true,

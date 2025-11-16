@@ -99,13 +99,13 @@ const getAllLeadsAndClients = async (
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
       isClient: false,
     };
   }
   else if (user.role === USER_ROLE.spokeManager) {
     matchStage = {
-      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
       isClient: false,
     };
   }

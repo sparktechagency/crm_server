@@ -5,13 +5,13 @@ import { USER_ROLE } from '../../constant';
 import { TAuthUser } from '../../interface/authUser';
 import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
 import AppError from '../../utils/AppError';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import { IRepaymentsDates } from '../loanApplication/loanApplication.interface';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import { NOTIFICATION_TYPE } from '../notification/notification.interface';
 import { TRepayments } from './repayments.interface';
 import Repayments from './repayments.model';
 import { calculatePenalty, findClientAndLoan } from './repayments.utils';
-import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
   const { month, ...rest } = payload;
@@ -46,8 +46,8 @@ const createRepayments = async (payload: TRepayments, user: TAuthUser) => {
     installmentAmount: payload.installmentAmount,
     clientId: findClient._id,
     applicationId: findLoan._id,
-    hubId: user.hubId,
-    spokeId: user.spokeId,
+    locationProfileHubId: user.locationProfileHubId,
+    locationSpokeId: user.locationSpokeId,
     penalty: 0,
     fieldOfficerId: user._id,
     status: penalty > 0 ? 'overdue' : 'paid',
@@ -98,16 +98,16 @@ const getAllRepayments = async (
   if (user.role === USER_ROLE.fieldOfficer) {
     matchStage = {
       fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-      hubId: new mongoose.Types.ObjectId(String(user.hubId)),
-      spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
     };
   } else if (user.role === USER_ROLE.hubManager) {
     matchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
     };
   } else if (user.role === USER_ROLE.spokeManager) {
     matchStage = {
-      spokeId: new mongoose.Types.ObjectId(String(user._id)),
+      locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
     };
   } else if (user.role === USER_ROLE.admin) {
     matchStage = {};
@@ -153,6 +153,7 @@ const getAllRepayments = async (
     .sort()
     .search(['client.customFields.name', 'email'])
     .paginate()
+    .filter(['status', 'isConfirm'])
     .execute(Repayments);
 
   const meta = await repaymentQuery.countTotal(Repayments);

@@ -3,13 +3,13 @@ import mongoose from 'mongoose';
 import { LOAN_APPLICATION_STATUS, USER_ROLE } from '../../constant';
 import { StatisticHelper } from '../../helper/staticsHelper';
 import { TAuthUser } from '../../interface/authUser';
+import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
+import { filteringCalculation } from '../../utils/filteringCalculation';
 import LeadsAndClientsModel from '../leadsAndClients/leadsAndClients.model';
 import LoanApplication from '../loanApplication/loanApplication.model';
 import Repayments from '../repayments/repayments.model';
 import User from '../user/user.model';
 import { commonPipeline, getAggregateAmount } from './dashboard.utils';
-import AggregationQueryBuilder from '../../QueryBuilder/aggregationBuilder';
-import { filteringCalculation } from '../../utils/filteringCalculation';
 
 const fieldOfficerDashboardCount = async (user: TAuthUser) => {
   const userId = new mongoose.Types.ObjectId(String(user._id));
@@ -195,52 +195,52 @@ const supervisorDashboardOverview = async (
 };
 
 const hubManagerDashboardCount = async (user: TAuthUser) => {
-  const userId = new mongoose.Types.ObjectId(String(user._id));
+  const userId = new mongoose.Types.ObjectId(String(user.locationProfileHubId));
 
   // Run all async operations concurrently using Promise.all
   const [totalClients, totalLeads, totalApplication, totalCollection, totalOverdue, approvedApplication, rejectedApplication, pendingApplication] =
     await Promise.all([
       // Total clients
       LeadsAndClientsModel.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
         isClient: true,
       }),
       // Total clients
       LeadsAndClientsModel.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
         isClient: false,
       }),
       // Total applications
       LoanApplication.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
       }),
 
       // Total collection (aggregate the installment amounts)
       Repayments.aggregate([
-        { $match: { hubId: userId } },
+        { $match: { locationProfileHubId: userId } },
         { $group: { _id: null, total: { $sum: '$installmentAmount' } } },
         { $project: { _id: 0, total: 1 } },
       ]),
 
       // Total overdue (aggregate the penalties)
       Repayments.aggregate([
-        { $match: { hubId: userId, status: 'overdue' } },
+        { $match: { locationProfileHubId: userId, status: 'overdue' } },
         { $group: { _id: null, total: { $sum: '$penalty' } } },
         { $project: { _id: 0, total: 1 } },
       ]),
 
-       // Total approved applications
+      // Total approved applications
       LoanApplication.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
         hubManagerApproval: "approved"
       }),
-       // Total rejected applications
+      // Total rejected applications
       LoanApplication.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
         hubManagerApproval: "rejected"
       }),
       LoanApplication.countDocuments({
-        hubId: userId,
+        locationProfileHubId: userId,
         hubManagerApproval: "pending"
       }),
     ]);
@@ -250,7 +250,7 @@ const hubManagerDashboardCount = async (user: TAuthUser) => {
     totalClients,
     totalLeads,
     totalApplication,
-    approvedApplication, 
+    approvedApplication,
     rejectedApplication,
     pendingApplication,
     totalCollection:
@@ -270,13 +270,13 @@ const hubManagerCollectionReport = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      ? { locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)) }
       : user.role === USER_ROLE.spokeManager
-        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        ? { locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-              fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-            }
+            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+          }
           : {};
 
   const result = await Repayments.aggregate([
@@ -343,7 +343,7 @@ const hubManagerLoanApprovalReport = async (
 
   if (user.role === USER_ROLE.hubManager) {
     commonMatchStage = {
-      hubId: new mongoose.Types.ObjectId(String(user._id)),
+      locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)),
       hubManagerApproval: { $ne: 'pending' },
     };
   } else if (user.role === USER_ROLE.admin) {
@@ -404,13 +404,13 @@ const allFieldOfficerCollection = async (
 
   const userId =
     user.role === USER_ROLE.hubManager
-      ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+      ? { locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)) }
       : user.role === USER_ROLE.spokeManager
-        ? { spokeId: new mongoose.Types.ObjectId(String(user._id)) }
+        ? { locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)) }
         : user.role === USER_ROLE.fieldOfficer
           ? {
-              spokeId: new mongoose.Types.ObjectId(String(user.spokeId)),
-            }
+            locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
+          }
           : {};
 
   const result = await repaymentQuery
@@ -517,14 +517,14 @@ const spokeManagerCount = async (user: TAuthUser) => {
   const userId =
     user.role === USER_ROLE.spokeManager
       ? {
-          spokeId: new mongoose.Types.ObjectId(String(user._id)),
-        }
+        locationSpokeId: new mongoose.Types.ObjectId(String(user.locationSpokeId)),
+      }
       : user.role === USER_ROLE.fieldOfficer
         ? {
-            fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
-          }
+          fieldOfficerId: new mongoose.Types.ObjectId(String(user._id)),
+        }
         : user.role === USER_ROLE.hubManager
-          ? { hubId: new mongoose.Types.ObjectId(String(user._id)) }
+          ? { locationProfileHubId: new mongoose.Types.ObjectId(String(user.locationProfileHubId)) }
           : {};
 
   const matchCriteria = {
@@ -542,10 +542,10 @@ const spokeManagerCount = async (user: TAuthUser) => {
         '$penalty',
       ),
       LeadsAndClientsModel.countDocuments({
-        spokeId: user._id,
+        locationSpokeId: user.locationSpokeId,
       }),
       LeadsAndClientsModel.countDocuments({
-        spokeId: user._id,
+        locationSpokeId: user.locationSpokeId,
         isClient: true,
       }),
     ]);
@@ -576,14 +576,14 @@ const adminDashboardCount = async (user: TAuthUser) => {
   };
 };
 
-const seeSpokeManageAnalytics = async (userId: string) => {
+const seeSpokeManageAnalytics = async (locationSpokeId: string) => {
   // Fetch both amounts in parallel to optimize time
   const [todayCollectionAmount, overdueAmount, fieldOfficers, clients] =
     await Promise.all([
       await Repayments.aggregate([
         {
           $match: {
-            spokeId: new mongoose.Types.ObjectId(String(userId)),
+            locationSpokeId: new mongoose.Types.ObjectId(String(locationSpokeId)),
           },
         },
         {
@@ -604,7 +604,7 @@ const seeSpokeManageAnalytics = async (userId: string) => {
       await Repayments.aggregate([
         {
           $match: {
-            spokeId: new mongoose.Types.ObjectId(String(userId)),
+            locationSpokeId: new mongoose.Types.ObjectId(String(locationSpokeId)),
             status: 'overdue',
           },
         },
@@ -625,10 +625,10 @@ const seeSpokeManageAnalytics = async (userId: string) => {
       ]),
       User.countDocuments({
         role: USER_ROLE.fieldOfficer,
-        spokeId: userId,
+        locationSpokeId: locationSpokeId,
       }),
       LeadsAndClientsModel.countDocuments({
-        spokeId: userId,
+        locationSpokeId: locationSpokeId,
         isClient: true,
       }),
     ]);

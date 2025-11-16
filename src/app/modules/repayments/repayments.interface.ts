@@ -4,8 +4,8 @@ export type TRepayments = {
   // relational fields
   applicationId: ObjectId;
   clientId: ObjectId;
-  hubId: ObjectId;
-  spokeId: ObjectId;
+  locationProfileHubId: ObjectId;
+  locationSpokeId: ObjectId;
   fieldOfficerId: ObjectId;
 
   // non-relational fields
